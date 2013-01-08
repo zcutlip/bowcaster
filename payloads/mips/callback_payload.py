@@ -1,70 +1,20 @@
-# *******************************************************************************
-# *******************************************************************************
-# *****************       These files are licensed GPLv2.        ****************
-# *******************   See included LICENSE for more info.   *******************
-# *******************************************************************************
-# *******************************************************************************
-# ************************  From your leet hacking cr3w  ************************
-# *******************************                 *******************************
-# **********************************    at     **********************************
-# *******************************                 *******************************
-# ****                                                                       ****
-# ****   TTTTTTTTTTTTTTTTTTTTTTTNNNNNNNN        NNNNNNNN   SSSSSSSSSSSSSSS   ****
-# ****   T:::::::::::::::::::::TN:::::::N       N::::::N SS:::::::::::::::S  ****
-# ****   T:::::::::::::::::::::TN::::::::N      N::::::NS:::::SSSSSS::::::S  ****
-# ****   T:::::TT:::::::TT:::::TN:::::::::N     N::::::NS:::::S     SSSSSSS  ****
-# ****   TTTTTT  T:::::T  TTTTTTN::::::::::N    N::::::NS:::::S              ****
-# ****           T:::::T        N:::::::::::N   N::::::NS:::::S              ****
-# ****           T:::::T        N:::::::N::::N  N::::::N S::::SSSS           ****
-# ****           T:::::T        N::::::N N::::N N::::::N  SS::::::SSSSS      ****
-# ****           T:::::T        N::::::N  N::::N:::::::N    SSS::::::::SS    ****
-# ****           T:::::T        N::::::N   N:::::::::::N       SSSSSS::::S   ****
-# ****           T:::::T        N::::::N    N::::::::::N            S:::::S  ****
-# ****           T:::::T        N::::::N     N:::::::::N            S:::::S  ****
-# ****         TT:::::::TT      N::::::N      N::::::::NSSSSSSS     S:::::S  ****
-# ****         T:::::::::T      N::::::N       N:::::::NS::::::SSSSSS:::::S  ****
-# ****         T:::::::::T      N::::::N        N::::::NS:::::::::::::::SS   ****
-# ****         TTTTTTTTTTT      NNNNNNNN         NNNNNNN SSSSSSSSSSSSSSS     ****
-# ****                                                                       ****
-# ****                                                                       ****
-# ************                http://www.tacnetsol.com                ***********
-# ***************                                                  **************
-# ***************MMMMMMMMMMMMMMMMMMMMMMMMMMMWo,:OMMMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMMMMMMMK.    ;MMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMMMMMMMX,''''cMMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMMNxxkWM;    0MMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMM,   cM'    xMMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMM0.o,.'   :X.    lMMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMXcO:.'   ;k     ;MMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMXoKc.'   ;x     .MMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMM0.c..'   ;o     .MMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMWOlod'   ;l      O0MMMMMN0MMMMMMMM**************
-# ***************MMMMMMMMMMMMMMM0lllld;...''......,',:;. .cNMMMMMMM**************
-# ***************MMMMMMMMMMMMMOlllo:.   ...............,0MMMMMMMMMM**************
-# ***************MMMMMMMMMMMOllllll;:l;   ,xXX0XXXooooollOMMMMMMMMM**************
-# ***************MMMMMMMMMOlllc;;'.,.,'   ,oMMKMMMlllllllllOMMMMMMM**************
-# ***************MMMMMMMOlc;,..'... .''   ,oMMKMMM;,;llllllllkWMMMM**************
-# ***************MMMMMOl:'.'.....  . .'   ,oMMKMMM;''',clllllllkWMM**************
-# ***************MMMOl:'.... ..   .  .'   ,oMMKMMM' ..'.'cllllllckW**************
-# ***************MMdc'....  ..   .   .'   ,oMMKMMM'..  ..',llllllcx**************
-# ***************MMMXl... ..    .    .'   ,oMMKMMM. .. .....cllcxNM**************
-# ***************MMMMMXc  .     .    .'   ,oMMKMMM.  .   ....cxNMMM**************
-# ***************MMMMMMMNl     .     .'   ,oMMKMMM'   .   . oNMMMMM**************
-# ***************MMMMMMMMMNc   .  .........;xKKMMM.    . .lNMMMMMMM**************
-# ***************MMMMMMMMMMMNl ...    .....   .cXM.    .lNMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMN; ....,  . .lkx;  k.   oWMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMK 'k.    ..  oMMKx .;.dWMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMN .KWo.      oMMXc .xWMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMM0. .,''... ',;,  ,NKMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMO:.   ...   .:KMMKMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMWKOkkx;lWMKMMMKMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMMMMMMMKWMKMMKWMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMMMMMMMMKWKMNXMMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMMMMMMMMMXOXNMMMMMMMMMMMMMMMMMM**************
-# ***************MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM**************
-# *******************************************************************************
-# *******************************************************************************
-# 
+#Copyright (C) 2013  Zachary Cutlip [uid000_at_gmail_dot_com]
+#
+#This program is free software; you can redistribute it and/or
+#modify it under the terms of the GNU General Public License
+#as published by the Free Software Foundation; either version 2
+#of the License, or (at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
 import string
 import socket
 import signal
