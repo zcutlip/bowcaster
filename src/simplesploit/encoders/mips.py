@@ -4,6 +4,7 @@ import struct
 
 from xorencoder import XorEncoder
 from ..common.support import BigEndian,LittleEndian
+from ..common.support import Logging
 
 class MipsXorEncoder(XorEncoder):
     MAX_ATTEMPTS=10
@@ -71,7 +72,7 @@ class MipsXorEncoder(XorEncoder):
         
         #keep trying until we find an original key
         while True:
-            print "Generating key."
+            self.logger.LOG_INFO("Generating key.")
             for i in range(0,4):
                 byte=random.randint(minbyte,maxbyte)
                 key=key | byte << (i * 8) 
@@ -87,11 +88,15 @@ class MipsXorEncoder(XorEncoder):
         return key
 
 
-    def __init__(self,payload,endianness,badchars=[],key=None):
+    def __init__(self,payload,endianness,badchars=[],key=None,logger=None):
+        self.logger=logger
         
+        if not self.logger:
+            self.logger=Logging()
+
         self.endianness=endianness
         self.badchars=self.__parse_badchars__(badchars)
-        print "bad char count: %d" % len(self.badchars)
+        self.logger.LOG_DEBUG("bad char count: %d" % len(self.badchars))
         generate_key=False
         
         self.key=key
@@ -115,7 +120,7 @@ class MipsXorEncoder(XorEncoder):
 
         if len(decoder_badchars) > 0:
             raise Exception("Decoder stub contains bad bytes: %s" % str(decoder_badchars))
-        print "No bad bytes in decoder stub."
+        self.logger.LOG_DEBUG("No bad bytes in decoder stub.")
 
         if not self.key:
             attempts=self.__class__.MAX_ATTEMPTS

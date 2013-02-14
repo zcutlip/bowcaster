@@ -19,6 +19,8 @@
 
 import struct
 import binascii
+from ..common.support import Logging
+from ..common.support import BigEndian,LittleEndian
 
 class OverflowBuffer:
     """A buffer overflow builder that generates a pattern of a desired length and replaces
@@ -64,7 +66,11 @@ class OverflowBuffer:
                             
 
 
-    def __init__(self,length,overflow_sections):
+    def __init__(self,length,overflow_sections,logger=None):
+        self.logger=logger
+        if not self.logger:
+            self.logger=Logging()
+
         self.overflow_sections=overflow_sections
         ostr=self.__class__.pattern_create(length)
         if len(ostr) < length:
@@ -80,9 +86,9 @@ class OverflowBuffer:
         problems=self.scan_for_overlaps(overflow_sections)
         if(len(problems) > 0):
             for k,v in problems.items():
-                print "Section \"%s\",\n\toffset: %d\n\tlength: %d\n\toverlaps with the following sections:" % (str(k),k.offset,len(k.value))
+                self.logger.LOG_WARN("Section \"%s\",\n\toffset: %d\n\tlength: %d\n\toverlaps with the following sections:" % (str(k),k.offset,len(k.value)))
                 for section in v:
-                    print  "\"%s\"\n\toffset: %d\n\tlength: %d" % (str(section),section.offset,len(section.value))
+                    self.logger.LOG_WARN("\"%s\"\n\toffset: %d\n\tlength: %d" % (str(section),section.offset,len(section.value)))
                     
             raise Exception("Overlapping overflow sections.")
 
@@ -150,7 +156,7 @@ class OverflowSection(object):
         self.value=value
         self.name_string=name_string
         if warn_if_nulls and '\x00' in value:
-            print "Found null byte in section: %s, section offset: %d" % (name_string,offset)
+            self.logger.LOG_WARN("Found null byte in section: %s, section offset: %d" % (name_string,offset))
 
     def __str__(self):
         return self.name_string
@@ -185,14 +191,15 @@ class RopGadget(OverflowSection):
     base_address -- an optional base address to add to your memory address. Useful when target
             libraries get loaded at varying addresses such as in live vs. emulated environments.
     """
-    BigEndian,LittleEndian=range(2)
 
     def __init__(self,endian,offset,rop_address,name_string,base_address=0,warn_if_nulls=False):
         format_str=""
-        if endian==self.__class__.BigEndian:
+        if endian==BigEndian:
             format_str=">L"
-        else:
+        elif endian == LittleEndian:
             format_str="<L"
+        else:
+            raise Exception("Unknown endianness specified in RopGadget")
             
         rop_bytes=struct.pack(format_str,rop_address+base_address)
         super(self.__class__,self).__init__(offset,rop_bytes,name_string,warn_if_nulls)
@@ -201,7 +208,7 @@ if __name__=="__main__":
     overflow_sections=[]
     # overflow_sections.append(OverflowSection(396,"AAAAAAAA","my string of As"))
     qemu_libc_base=0x40942000
-    rop_g=RopGadget(RopGadget.BigEndian,0,0x1eb10,"one two three four rop gadget",qemu_libc_base)
+    rop_g=RopGadget(BigEndian,0,0x1eb10,"one two three four rop gadget",qemu_libc_base)
     
     overflow_sections.append(rop_g)
    
