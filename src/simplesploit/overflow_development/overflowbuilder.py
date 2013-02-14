@@ -72,13 +72,52 @@ class OverflowBuffer:
         for osect in overflow_sections:
             if (osect.offset + len(osect.value)) > len(ostr):
                 raise Exception("Overflow replacement section not within bounds of overflow string\n"+\
-                    "Name: %s\nOffset: %d\nLength: %d\noverflow string needs to be %d long to fit" % (osect.name_string,osect.offset,len(osect.value),osect.offset+len(osect.value)))
+                    "Name: %s\nOffset: %d\nLength: %d\noverflow string needs to be %d long to fit" \
+                    % (osect.name_string,osect.offset,len(osect.value),osect.offset+len(osect.value)))
             ostr=ostr[:osect.offset]+\
                 osect.value+\
                 ostr[osect.offset+len(osect.value):]
+        problems=self.scan_for_overlaps(overflow_sections)
+        if(len(problems) > 0):
+            for k,v in problems.items():
+                print "Section \"%s\",\n\toffset: %d\n\tlength: %d\n\toverlaps with the following sections:" % (str(k),k.offset,len(k.value))
+                for section in v:
+                    print  "\"%s\"\n\toffset: %d\n\tlength: %d" % (str(section),section.offset,len(section.value))
+                    
+            raise Exception("Overlapping overflow sections.")
 
         self.overflow_string=ostr
     
+    def scan_for_overlaps(self,section_list):
+        not_scanned=[]
+        problems={}
+
+        for sect in section_list:
+            not_scanned.append(sect)
+
+        while len(not_scanned) > 0:
+            overlapping=[]
+            sect=not_scanned.pop(0)
+            for unscanned in not_scanned:
+                if sect.overlaps_with(unscanned):
+                    overlapping.append(unscanned)
+                if len(overlapping) > 0:
+                    problems[sect]=overlapping
+        return problems
+
+
+    def scan_for_nulls(self):
+        offsets=[]
+        offset=0
+
+        for char in self.overflow_string:
+            offset+=1
+            if char == '\x00':
+                offsets.append(offset)
+
+        return offsets
+
+   
     def find_offset(self,string):
        return self.overflow_string.find(string)
 
@@ -106,13 +145,30 @@ class OverflowSection(object):
     name_string -- A descriptive name for this replacement section.
     """
 
-    def __init__(self,offset,value,name_string):
+    def __init__(self,offset,value,name_string,warn_if_nulls=False):
         self.offset=offset
         self.value=value
         self.name_string=name_string
+        if warn_if_nulls and '\x00' in value:
+            print "Found null byte in section: %s, section offset: %d" % (name_string,offset)
 
     def __str__(self):
         return self.name_string
+
+    def overlaps_with(self,osection):
+        my_start=self.offset
+        my_end=self.offset + len(self.value)
+
+        their_start=osection.offset
+        their_end=osection.offset+len(osection.value)
+
+        if my_start > their_start and my_start < their_end:
+            return True
+        
+        if their_start > my_start and their_start < my_end:
+            return True
+
+        return False
 
 class RopGadget(OverflowSection):
     """An object that can replace a 4-byte subset of the
@@ -131,7 +187,7 @@ class RopGadget(OverflowSection):
     """
     BigEndian,LittleEndian=range(2)
 
-    def __init__(self,endian,offset,rop_address,name_string,base_address=0):
+    def __init__(self,endian,offset,rop_address,name_string,base_address=0,warn_if_nulls=False):
         format_str=""
         if endian==self.__class__.BigEndian:
             format_str=">L"
@@ -139,7 +195,7 @@ class RopGadget(OverflowSection):
             format_str="<L"
             
         rop_bytes=struct.pack(format_str,rop_address+base_address)
-        super(self.__class__,self).__init__(offset,rop_bytes,name_string)
+        super(self.__class__,self).__init__(offset,rop_bytes,name_string,warn_if_nulls)
 
 if __name__=="__main__":
     overflow_sections=[]
