@@ -2,7 +2,6 @@ import sys
 
 BigEndian,LittleEndian=range(2)
 
-
 class Logging:
     WARN=0
     INFO=1
@@ -18,7 +17,8 @@ class Logging:
         self.logfile.flush()
 
     def log_msg_end(self,msg):
-        self.logfile.write(msg)
+        self.logfile.write("%s\n" % msg)
+        self.logfile.flush()
 
     def log_msg(self,msg,level=INFO):
         msg="%s\n"%msg
