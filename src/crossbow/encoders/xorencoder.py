@@ -1,4 +1,7 @@
 class XorEncoder(object):
+    """
+    Base class for architecture-specific XOR encoders. Provides self.encode().
+    """
     def encode(self,data,key):
         if len(data) % len(key) != 0:
             raise "Data length must be a multiple of key length"
