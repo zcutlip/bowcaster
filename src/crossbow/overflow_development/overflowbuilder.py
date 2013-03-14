@@ -137,13 +137,18 @@ class OverflowBuffer(object):
         return self.overflow_string.find(string)
 
     def __str__(self):
+        return self.overflow_string
+
+    def __repr__(self):
+        return str(self)
+        
+    def pretty_string(self):
         string=""
         for byte in self.overflow_string:
             if ord(byte) >= 32 and ord(byte) <= 126:
                 string+=byte
             else:
                 string+="\\x"+binascii.hexlify(byte)
-
         return string
 
 class EmptyOverflowBuffer(OverflowBuffer):
