@@ -1,10 +1,11 @@
 import string
 import random
 import struct
-
+from ..encoders import EncoderException
 from xorencoder import XorEncoder
 from ..common.support import BigEndian,LittleEndian
 from ..common.support import Logging
+from ..common.support import pretty_string
 
 class MipsXorEncoder(XorEncoder):
     """
@@ -96,9 +97,15 @@ class MipsXorEncoder(XorEncoder):
                         badchar_list.append(ord(part))
         
         return badchar_list
-    
+    def __pack_key(self,key):
+        if self.endianness==BigEndian:
+            packed_key=struct.pack('>I',key)
+        else:
+            packed_key=struct.pack('<I',key)
+        return packed_key
+        
     #TODO: Does this need to be moved to superclass?
-    def __generate_key(self,triedkeys):
+    def __generate_key(self,triedkeys,badchars):
         minbyte=0x01
         maxbyte=0xff
         key=0
@@ -108,13 +115,15 @@ class MipsXorEncoder(XorEncoder):
         while True:
             self.logger.LOG_INFO("Generating key.")
             for i in range(0,4):
-                byte=random.randint(minbyte,maxbyte)
+                while True:
+                    byte=random.randint(minbyte,maxbyte)
+                    if byte in badchars:
+                        self.logger.LOG_DEBUG("bad byte when generating key : %#04x"% byte)
+                    else:
+                        break
                 key=key | byte << (i * 8) 
-                #print "Key: %#010x" % key
-            if self.endianness==BigEndian:
-                key=struct.pack('>I',key)
-            else:
-                key=struct.pack('<I',key)
+            self.logger.LOG_DEBUG("Key: %#010x" % key)
+            key=self.__pack_key(key)
 
             if not key in triedkeys:
                 break
@@ -138,11 +147,12 @@ class MipsXorEncoder(XorEncoder):
             
         Raises EncoderException
         """
-        self.logger=logger
         
-        if not self.logger:
-            self.logger=Logging()
+        
+        if not logger:
+            logger=Logging()
 
+        self.logger=logger
         self.endianness=endianness
         self.badchars=self.__parse_badchars(badchars)
         self.logger.LOG_DEBUG("bad char count: %d" % len(self.badchars))
@@ -166,21 +176,26 @@ class MipsXorEncoder(XorEncoder):
         decoder=decoder.replace("SIZ1",chr(sizehi))
         decoder=decoder.replace("SIZ2",chr(sizelo)) #SIZ1SIZ2 == sizehisizelo
         decoder_badchars=self.__has_badchars(decoder,self.badchars)
-
+        
         if len(decoder_badchars) > 0:
-            raise Exception("Decoder stub contains bad bytes: %s" % str(decoder_badchars))
+            raise EncoderException("Decoder stub contains bad bytes: %s" % str(decoder_badchars))
         self.logger.LOG_DEBUG("No bad bytes in decoder stub.")
 
         if not self.key:
             attempts=self.__class__.MAX_ATTEMPTS
         else:
             attempts=1
-        
+            self.key=self.__pack_key(self.key)
+            key_badchars=self.__has_badchars(self.key,self.badchars)
+            if(len(key_badchars) > 0):
+                raise EncoderException("Provided XOR key has bad bytes: %s" % str(key_badchars))
+
+
         tried_keys=[self.key]
 
         while attempts > 0:
             if not self.key:
-                self.key=self.__generate_key(tried_keys)
+                self.key=self.__generate_key(tried_keys,self.badchars)
                 tried_keys.append(self.key)
             
             encoded_shellcode=self.encode(payload.shellcode,self.key)
@@ -194,9 +209,12 @@ class MipsXorEncoder(XorEncoder):
         
         if not self.key:
             raise Exception("Failed to encode payload without bad bytes.")
-
+            
         self.shellcode=decoder+self.key+encoded_shellcode
-
+    
+    def pretty_string(self):
+        return pretty_string(self.shellcode)
+        
     def __str__(self):
         data=""
         for c in self.shellcode:
