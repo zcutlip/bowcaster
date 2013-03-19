@@ -1,5 +1,14 @@
 import sys
+import binascii
 
+def pretty_string(string):
+    p_string=""
+    for byte in string:
+        if ord(byte) >= 32 and ord(byte) <= 126:
+            p_string+=byte
+        else:
+            p_string+="\\x"+binascii.hexlify(byte)
+    return p_string
 
 BigEndian,LittleEndian=range(2)
 """
