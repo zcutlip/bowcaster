@@ -1,7 +1,8 @@
 import struct
-import binascii
+
 from ..common.support import Logging
 from ..common.support import BigEndian,LittleEndian
+from ..common.support import pretty_string
 
 class OverflowBuilderException(Exception):
     pass
@@ -68,8 +69,11 @@ class OverflowBuffer(object):
 
         self.overflow_string=ostr
     def len(self):
+        """
+        Returns length of the overflow buffer.
+        """
         return len(self.overflow_string)
-        
+    
     def scan_for_overlaps(self,section_list):
         """
         Scan all overflow sections for overlaps with each other.
@@ -135,7 +139,17 @@ class OverflowBuffer(object):
         See Python string.find() for semantic info.
         """
         return self.overflow_string.find(string)
-
+    
+    def print_section_descriptions(self):
+        self.logger.LOG_INFO("************************************")
+        self.logger.LOG_INFO("Section Descriptions:")
+        self.logger.LOG_INFO("")
+        for section in self.overflow_sections:
+            self.logger.LOG_INFO(section.description)
+        self.logger.LOG_INFO("")
+        self.logger.LOG_INFO("************************************")
+        
+        
     def __str__(self):
         return self.overflow_string
 
@@ -143,13 +157,7 @@ class OverflowBuffer(object):
         return str(self)
         
     def pretty_string(self):
-        string=""
-        for byte in self.overflow_string:
-            if ord(byte) >= 32 and ord(byte) <= 126:
-                string+=byte
-            else:
-                string+="\\x"+binascii.hexlify(byte)
-        return string
+        return pretty_string(self.overflow_string)
 
 class EmptyOverflowBuffer(OverflowBuffer):
     """
@@ -172,6 +180,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
         """
+        
         self.default_base=default_base
         self.endianness=endianness
         self.badchars=badchars
@@ -180,6 +189,8 @@ class EmptyOverflowBuffer(OverflowBuffer):
         self.maxlength=maxlength
         self.sections=no_sections
         self.section_creator=SectionCreator(endianness,default_base,badchars)
+        if not logger:
+            logger=Logging()
         super(self.__class__,self).__init__(no_length,no_sections,logger=logger)
         
     def __add_section(self,section):
@@ -232,7 +243,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
             buffer to excited the specified maximum length
         """
         pattern_section=self.section_creator.pattern_section(self.len(),length,description)
-        self.__add_section(pattern.section_string)
+        self.__add_section(pattern_section)
     
     def add_rop_gadget(self,address,base_address=None,description=None):
         """
@@ -257,6 +268,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
             base_address=self.default_base
         gadget=self.section_creator.gadget_section(self.len(),address,
                         base_address=base_address,description=description)
+        self.__add_section(gadget)
 
 class OverflowSection(object):
     """A class to represent a section of the overflow buffer.
@@ -283,7 +295,8 @@ class OverflowSection(object):
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
         """
-        
+        if not logger:
+            logger=Logging()
         self.offset=offset
         self.section_string=section_string
         if not description:
@@ -386,7 +399,7 @@ class PatternSection(OverflowSection):
         """
         
         overall_length=offset+length
-        pattern=self.__class__.pattern_create(overall_legnth)
+        pattern=self.__class__.pattern_create(overall_length)
         pattern=pattern[offset:offset+length]
         if not description:
             description=("Pattern at offset %d, length %d" % (offset,length))
@@ -438,8 +451,6 @@ class RopGadget(OverflowSection):
         
         if not description:
             description = ("ROP gadget: offset %d, address %#010x" % (offset,rop_address+base_address))
-        if logger:
-            logger.LOG_DEBUG("ROP Gadget: %s\n\toffset: %d, address: %#010x" % (description,offset,(rop_address+base_address)))
         rop_bytes=struct.pack(format_str,rop_address+base_address)
         
         super(self.__class__,self).__init__(offset,rop_bytes,description,badchars)
@@ -505,7 +516,7 @@ class SectionCreator(object):
         """
         if None==base_address:
             base_address=self.base_address
-        self.logger.LOG_DEBUG("rop address: %#010x" % rop_address)
+
         return RopGadget(self.endianness,offset,rop_address,
                         description=description,
                         base_address=base_address,
