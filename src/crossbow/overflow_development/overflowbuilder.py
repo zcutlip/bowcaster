@@ -16,7 +16,7 @@ class OverflowBuffer(object):
     addresses and a payload string.
     """
                             
-    def __init__(self,length,overflow_sections,logger=None):
+    def __init__(self,endianness,length,overflow_sections,logger=None):
         """
         Class constructor.
         
@@ -36,7 +36,7 @@ class OverflowBuffer(object):
         """
         
         self.overflow_string=None
-        """Resulting buffer overflow string after all sections are added."""
+        self.endianness=endianness
         self.logger=logger
         if not self.logger:
             self.logger=Logging()
@@ -133,11 +133,19 @@ class OverflowBuffer(object):
         return offsets
 
    
-    def find_offset(self,string):
+    def find_offset(self,value):
         """Find a string in the overflow string.
         Returns offset where the string is found, or -1 if not found.
         See Python string.find() for semantic info.
         """
+        string=value
+        if isinstance(value,int):
+            if self.endianness==BigEndian:
+                format_str=">L"
+            elif endianness == LittleEndian:
+                format_str="<L"
+            string=struct.pack(format_str,value)
+            
         return self.overflow_string.find(string)
     
     def print_section_descriptions(self):
@@ -188,10 +196,11 @@ class EmptyOverflowBuffer(OverflowBuffer):
         no_length=0
         self.maxlength=maxlength
         self.sections=no_sections
-        self.section_creator=SectionCreator(endianness,default_base,badchars)
+
         if not logger:
             logger=Logging()
-        super(self.__class__,self).__init__(no_length,no_sections,logger=logger)
+        self.section_creator=SectionCreator(endianness,base_address=default_base,badchars=badchars,logger=logger)
+        super(self.__class__,self).__init__(endianness,no_length,no_sections,logger=logger)
         
     def __add_section(self,section):
         newlength=self.len() + len(section.section_string)
@@ -218,7 +227,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
             buffer to excited the specified maximum length
         """
         if not description:
-            description=("String. Offset: %d, length: %d" % self.len(),len(string))
+            description=("String. Offset: %d, length: %d" % (self.len(),len(string)))
         section=self.section_creator.string_section(self.len(),string,description)
         self.__add_section(section)
         
@@ -353,12 +362,18 @@ class PatternSection(OverflowSection):
         return list(pruned)
         
     @classmethod
-    def pattern_create(cls,requested_length,badchars=[]):
+    def pattern_create(cls,requested_length,badchars=[],logger=None):
 
         #TODO: Make this generic and more elegant. Maybe with recursion.
+
         upper_alpha=cls.__prune_bad_chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ",badchars)
         lower_alpha=cls.__prune_bad_chars("abcdefghijklmnopqrstuvwxyz",badchars)
         numerals=cls.__prune_bad_chars("0123456789",badchars)
+
+        if logger:
+            logger.LOG_DEBUG("uppers: %s" % str(upper_alpha))
+            logger.LOG_DEBUG("lowers: %s" % str(lower_alpha))
+            logger.LOG_DEBUG("numerals: %s" % str(numerals))
 
         maxlen=len(upper_alpha)*len(lower_alpha)*len(numerals)
         buildlen=maxlen if requested_length > maxlen else requested_length
@@ -381,7 +396,7 @@ class PatternSection(OverflowSection):
 
         return pattern
         
-    def __init__(self,offset,length,description=None,badchars=[]):
+    def __init__(self,offset,length,description=None,badchars=[],logger=None):
         """
         Class constructor.
         
@@ -399,7 +414,7 @@ class PatternSection(OverflowSection):
         """
         
         overall_length=offset+length
-        pattern=self.__class__.pattern_create(overall_length)
+        pattern=self.__class__.pattern_create(overall_length,badchars=badchars,logger=logger)
         pattern=pattern[offset:offset+length]
         if not description:
             description=("Pattern at offset %d, length %d" % (offset,length))
@@ -495,7 +510,7 @@ class SectionCreator(object):
         """
         Create a pattern section from the provided length and offset.
         """
-        return PatternSection(offset,length,description,self.badchars)
+        return PatternSection(offset,length,description=description,badchars=self.badchars)
         
     def gadget_section(self,offset,rop_address,description=None,base_address=None):
         """
@@ -520,6 +535,7 @@ class SectionCreator(object):
         return RopGadget(self.endianness,offset,rop_address,
                         description=description,
                         base_address=base_address,
+                        badchars=self.badchars,
                         logger=self.logger)
 
 if __name__=="__main__":
