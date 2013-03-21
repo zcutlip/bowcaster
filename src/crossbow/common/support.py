@@ -14,7 +14,18 @@ BigEndian,LittleEndian=range(2)
 """
 Endianness constants to pass to constructors ofendianness-sensitive classes.
 """
-
+def parse_badchars(badchars):
+    badchar_list=[]
+    for item in badchars:
+        if type(item)==int:
+            badchar_list.append(chr(item))
+        else:
+            if type(item) == str:
+                parts=list(item)
+                for part in parts:
+                    badchar_list.append(part)
+    return badchar_list
+    
 class Logging:
     """
     Basic logging class. Prints to stdout by default.
