@@ -6,6 +6,7 @@ from xorencoder import XorEncoder
 from ..common.support import BigEndian,LittleEndian
 from ..common.support import Logging
 from ..common.support import pretty_string
+from ..common.support import parse_badchars
 
 class MipsXorEncoder(XorEncoder):
     """
@@ -80,23 +81,12 @@ class MipsXorEncoder(XorEncoder):
         badchar_list=[]
         for char in badchars:
             #print "Checking for char: "+str(char)
-            if chr(char) in data:
+            if char in data:
                 badchar_list.append(char)
 
         return badchar_list
 
-    def __parse_badchars(self,badchars):
-        badchar_list=[]
-        for item in badchars:
-            if type(item)==int:
-                badchar_list.append(item)
-            else:
-                if type(item) == str:
-                    parts=list(item)
-                    for part in parts:
-                        badchar_list.append(ord(part))
         
-        return badchar_list
     def __pack_key(self,key):
         if self.endianness==BigEndian:
             packed_key=struct.pack('>I',key)
@@ -117,7 +107,7 @@ class MipsXorEncoder(XorEncoder):
             for i in range(0,4):
                 while True:
                     byte=random.randint(minbyte,maxbyte)
-                    if byte in badchars:
+                    if chr(byte) in badchars:
                         self.logger.LOG_DEBUG("bad byte when generating key : %#04x"% byte)
                     else:
                         break
@@ -154,7 +144,7 @@ class MipsXorEncoder(XorEncoder):
 
         self.logger=logger
         self.endianness=endianness
-        self.badchars=self.__parse_badchars(badchars)
+        self.badchars=parse_badchars(badchars)
         self.logger.LOG_DEBUG("bad char count: %d" % len(self.badchars))
         generate_key=False
         

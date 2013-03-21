@@ -3,6 +3,7 @@ import struct
 from ..common.support import Logging
 from ..common.support import BigEndian,LittleEndian
 from ..common.support import pretty_string
+from ..common.support import parse_badchars
 
 class OverflowBuilderException(Exception):
     pass
@@ -191,7 +192,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
         
         self.default_base=default_base
         self.endianness=endianness
-        self.badchars=badchars
+        self.badchars=parse_badchars(badchars)
         no_sections=[]
         no_length=0
         self.maxlength=maxlength
@@ -468,7 +469,7 @@ class RopGadget(OverflowSection):
             description = ("ROP gadget: offset %d, address %#010x" % (offset,rop_address+base_address))
         rop_bytes=struct.pack(format_str,rop_address+base_address)
         
-        super(self.__class__,self).__init__(offset,rop_bytes,description,badchars)
+        super(self.__class__,self).__init__(offset,rop_bytes,description=description,badchars=badchars)
 
 class SectionCreator(object):
     """
@@ -494,7 +495,7 @@ class SectionCreator(object):
             instantiated with output to stdout.
         """
         self.endianness=endianness
-        self.badchars=badchars
+        self.badchars=parse_badchars(badchars)
         self.base_address=base_address
         if not logger:
             logger=Logging()
