@@ -17,7 +17,7 @@ class OverflowBuffer(object):
     addresses and a payload string.
     """
                             
-    def __init__(self,endianness,length,overflow_sections,logger=None):
+    def __init__(self,endianness,length,overflow_sections=None,logger=None):
         """
         Class constructor.
         
@@ -41,7 +41,9 @@ class OverflowBuffer(object):
         self.logger=logger
         if not self.logger:
             self.logger=Logging()
-
+        if None == overflow_sections:
+            overflow_sections = []
+            
         self.overflow_sections=overflow_sections
         ostr=PatternSection.pattern_create(length)
         if len(ostr) < length:
@@ -143,7 +145,7 @@ class OverflowBuffer(object):
         if isinstance(value,int):
             if self.endianness==BigEndian:
                 format_str=">L"
-            elif endianness == LittleEndian:
+            elif self.endianness == LittleEndian:
                 format_str="<L"
             string=struct.pack(format_str,value)
             
