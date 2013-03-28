@@ -4,9 +4,12 @@ from distutils.core import setup
 
 setup(name='Crossbow',
         version='0.1',
-        description='Simple exploit development framework',
+        description='Lightweight, cross-platform exploit development framework',
+        long_description=open('README.txt').read(),
         author='Zachary Cutlip',
+        author_email="uid000@gmail.com",
         package_dir = {'':'src'},
+        package_data={'':['contrib/C/*','contrib/asm/mips/*']},
         packages=['crossbow',
             'crossbow.common',
             'crossbow.overflow_development',
