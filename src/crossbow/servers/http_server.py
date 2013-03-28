@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# Copyright (c) 2013
+# - Zachary Cutlip <uid000@gmail.com>
+# - Tactical Network Solutions, LLC
+# 
+# See LICENSE.txt for more details.
+# 
+
 import os
 
 import urlparse
@@ -20,7 +27,7 @@ class LimitedHTTPServer(HTTPServer):
         if filename in self.files_to_serve:
             return True
         return False
-    
+
     def more_files(self):
         if len(self.files_to_serve) > 0:
             return True
@@ -56,7 +63,7 @@ class LimitedHTTPRequestHandler(BaseHTTPRequestHandler):
         else:
             print "Server doesn't have file: %s" % self.path
             file_exists=False
-        
+
         if not file_exists:
             self.send_error(404,'File Not found: %s' % self.path)
 

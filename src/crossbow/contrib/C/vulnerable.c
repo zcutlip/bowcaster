@@ -1,3 +1,12 @@
+/* 
+ * Copyright (c) 2013
+ * - Zachary Cutlip <uid000@gmail.com>
+ * - Tactical Network Solutions, LLC
+ * 
+ * See LICENSE.txt for more details.
+ * 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -34,7 +43,7 @@ int main(int argc, char **argv)
     }
 
     bytes_received=use_stack_space(sockfd);
-    
+
     printf("recieved %d bytes\n",bytes_received);
 
     shutdown(sockfd,SHUT_RDWR);
@@ -70,7 +79,7 @@ int receive_data(int sockfd)
     {
         return -1;
     }
-    
+
     read_bytes=recv(sockfd,buf,2048,0);
     if(read_bytes < 0)
     {
@@ -81,7 +90,7 @@ int receive_data(int sockfd)
     }
 
     return read_bytes;
-    
+
 }
 
 int accept_remote(const char *local_port)
@@ -102,14 +111,14 @@ int accept_remote(const char *local_port)
         printf("Invalid parameter: local_port string was NULL.\n");
         return -1;
     }
-    
+
 
     memset(&hints,0,sizeof(hints));
 
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; //use my ip
-    
+
     if((rv = getaddrinfo(NULL,local_port,&hints,&srvinfo)) != 0)
     {
         printf("getaddrinfo: %s\n",gai_strerror(rv));
@@ -166,7 +175,7 @@ int accept_remote(const char *local_port)
                 &(((struct sockaddr_in *)&their_addr)->sin_addr),
                 s,sizeof(s));
         printf("Connection from %s",s);
-        
+
         close(server_sockfd); //done with listener
         return connection_sockfd;
     }

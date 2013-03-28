@@ -1,3 +1,9 @@
+# Copyright (c) 2013
+# - Zachary Cutlip <uid000@gmail.com>
+# - Tactical Network Solutions, LLC
+# 
+# See LICENSE.txt for more details.
+# 
 #Copyright (C) 2013  Zachary Cutlip [uid000_at_gmail_dot_com]
 #
 #This program is free software; you can redistribute it and/or

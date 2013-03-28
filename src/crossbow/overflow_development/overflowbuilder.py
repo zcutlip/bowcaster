@@ -1,3 +1,9 @@
+# Copyright (c) 2013
+# - Zachary Cutlip <uid000@gmail.com>
+# - Tactical Network Solutions, LLC
+# 
+# See LICENSE.txt for more details.
+# 
 import struct
 
 from ..common.support import Logging
@@ -11,16 +17,16 @@ class OverflowBuilderException(Exception):
 class OverflowBuffer(object):
     """
     Primary overflow builder class.
-    
+
     Generates a buffer of a desired length filled with a generated pattern.
-    Replaces parts of that pattern with replacement objects such as ROP 
+    Replaces parts of that pattern with replacement objects such as ROP
     addresses and a payload string.
     """
-                            
+
     def __init__(self,endianness,length,overflow_sections=None,logger=None):
         """
         Class constructor.
-        
+
         Parameters
         ----------
         length: Length of overflow buffer to build.
@@ -28,14 +34,14 @@ class OverflowBuffer(object):
             into the base overflow string.
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
-        
+
         Attributes
         ----------
-        
-        
+
+
         Raises OverflowBuilderException
         """
-        
+
         self.overflow_string=None
         self.endianness=endianness
         self.logger=logger
@@ -43,7 +49,7 @@ class OverflowBuffer(object):
             self.logger=Logging()
         if None == overflow_sections:
             overflow_sections = []
-            
+
         self.overflow_sections=overflow_sections
         ostr=PatternSection.pattern_create(length)
         if len(ostr) < length:
@@ -54,7 +60,7 @@ class OverflowBuffer(object):
                     "Name: %s\nOffset: %d\nLength: %d\noverflow string needs to be %d long to fit" \
                     % (osect.description,osect.offset,len(osect.section_string),osect.offset+len(osect.section_string))
                 raise OverflowBuilderException(err)
-                
+
             ostr=ostr[:osect.offset]+\
                 osect.section_string+\
                 ostr[osect.offset+len(osect.section_string):]
@@ -62,12 +68,12 @@ class OverflowBuffer(object):
         if(len(problems) > 0):
             for k,v in problems.items():
                 self.logger.LOG_WARN("Section \"%s\",\n\toffset: %d\n\tlength: "+\
-                    "%d\n\toverlaps with the following sections:" % 
+                    "%d\n\toverlaps with the following sections:" %
                     (str(k),k.offset,len(k.section_string)))
                 for section in v:
-                    self.logger.LOG_WARN("\"%s\"\n\toffset: %d\n\tlength: %d" % 
+                    self.logger.LOG_WARN("\"%s\"\n\toffset: %d\n\tlength: %d" %
                         (str(section),section.offset,len(section.section_string)))
-                    
+
             raise OverflowBuilderException("Overlapping overflow sections.")
 
         self.overflow_string=ostr
@@ -76,21 +82,21 @@ class OverflowBuffer(object):
         Returns length of the overflow buffer.
         """
         return len(self.overflow_string)
-    
+
     def scan_for_overlaps(self,section_list):
         """
         Scan all overflow sections for overlaps with each other.
-        
+
         Iterates over every section in the provided list checking for overlaps.
         The first section is checked against the remaining sections, then
         removed from the list.  Then the next section is checked against all
         remaining ones, and so forth until no unscanned sections removed.
-        
+
         Parameters
         ----------
         section_list: List of sections to to check for overlaps.
-        
-        
+
+
         Note
         ----
         Returns a dictionary of problem sections, each one with a list of
@@ -121,7 +127,7 @@ class OverflowBuffer(object):
     def scan_for_nulls(self):
         """
         Scan the overflow string for NULL bytes.
-        
+
         Returns a list of offsets in the overflow string where NULL bytes are
         located. An empty list means no NULL bytes were found.
         """
@@ -135,7 +141,7 @@ class OverflowBuffer(object):
 
         return offsets
 
-   
+
     def find_offset(self,value):
         """Find a string in the overflow string.
         Returns offset where the string is found, or -1 if not found.
@@ -148,9 +154,9 @@ class OverflowBuffer(object):
             elif self.endianness == LittleEndian:
                 format_str="<L"
             string=struct.pack(format_str,value)
-            
+
         return self.overflow_string.find(string)
-    
+
     def print_section_descriptions(self):
         self.logger.LOG_INFO("************************************")
         self.logger.LOG_INFO("Section Descriptions:")
@@ -159,14 +165,14 @@ class OverflowBuffer(object):
             self.logger.LOG_INFO(section.description)
         self.logger.LOG_INFO("")
         self.logger.LOG_INFO("************************************")
-        
-        
+
+
     def __str__(self):
         return self.overflow_string
 
     def __repr__(self):
         return str(self)
-        
+
     def pretty_string(self):
         return pretty_string(self.overflow_string)
 
@@ -178,7 +184,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
     def __init__(self,endianness,default_base=0,badchars=[],maxlength=0,logger=None):
         """
         Class constructor.
-        
+
         Parameters
         ----------
         endianness: Endianness of the target system. (See the support.BigEndian
@@ -191,7 +197,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
         """
-        
+
         self.default_base=default_base
         self.endianness=endianness
         self.badchars=parse_badchars(badchars)
@@ -204,7 +210,7 @@ class EmptyOverflowBuffer(OverflowBuffer):
             logger=Logging()
         self.section_creator=SectionCreator(endianness,base_address=default_base,badchars=badchars,logger=logger)
         super(self.__class__,self).__init__(endianness,no_length,no_sections,logger=logger)
-        
+
     def __add_section(self,section):
         newlength=self.len() + len(section.section_string)
         if self.maxlength and (newlength > self.maxlength ):
@@ -214,18 +220,18 @@ class EmptyOverflowBuffer(OverflowBuffer):
             raise OverflowBuilderException(err)
         self.overflow_sections.append(section)
         self.overflow_string=self.overflow_string+section.section_string
-        
+
     def add_string(self,string,description=None):
         """
         Append a string seciton to the overflow buffer.
-        
+
         Parameters
         ----------
         string: The string to append to the overflow buffer.
         description: Optional. A string describing this overflow section. If one
             is not provided, a generic one will be generated.  Useful for
             more readable logs and Exception messages.
-            
+
         Raises OverflowBuilerException if this string would cause the overflow
             buffer to excited the specified maximum length
         """
@@ -233,37 +239,37 @@ class EmptyOverflowBuffer(OverflowBuffer):
             description=("String. Offset: %d, length: %d" % (self.len(),len(string)))
         section=self.section_creator.string_section(self.len(),string,description)
         self.__add_section(section)
-        
+
     def add_pattern(self,length,description=None):
         """
         Generate and append a pattern.
-        
-        
+
+
         Generates a pattern based on the current offset in the buffer.  This
         ensures the location of substrings in this pattern will always be
         constant relative to the beginning of the buffer, even if this section
         is later moved forward or backwards or shortened or lengthened.
-        
+
         Parameters
         ----------
         length: Length of the pattern to be generated.
         description: Optional. A string describing this overflow section. If one
             is not provided, a generic one will be generated.  Useful for
             more readable logs and Exception messages.
-        
+
         Raises OverflowBuilerException if this string would cause the overflow
             buffer to excited the specified maximum length
         """
         pattern_section=self.section_creator.pattern_section(self.len(),length,description)
         self.__add_section(pattern_section)
-    
+
     def add_rop_gadget(self,address,base_address=None,description=None):
         """
         Append a ROP gadget section to the overflow buffer.
-        
+
         Parameters
         ----------
-        address: The address in the library or executable the ROP gadget is 
+        address: The address in the library or executable the ROP gadget is
             found.
         base_address: Optional. The base address to be added to address
             to compute the ROP gadget's actual address in memory.  If not
@@ -272,9 +278,9 @@ class EmptyOverflowBuffer(OverflowBuffer):
         description: Optional. A string describing this overflow section. If one
             is not provided, a generic one will be generated.  Useful for
             more readable logs and Exception messages.
-            
+
         Raises OverflowBuilerException if this string would cause the overflow
-            buffer to excited the specified maximum length.        
+            buffer to excited the specified maximum length.
         """
         if None==base_address:
             base_address=self.default_base
@@ -293,7 +299,7 @@ class OverflowSection(object):
     def __init__(self,offset,section_string,description=None,badchars=[],logger=None):
         """
         Class constructor.
-        
+
         Parameters
         ----------
         offset: Offset in the buffer where this section should be located.
@@ -314,15 +320,15 @@ class OverflowSection(object):
         if not description:
             description = ("Generic overflow section. Offset %d, length %d" %
                  (offset,len(section_string)))
-                 
+
         self.description=description
-        
+
         for char in badchars:
             if char in section_string:
-                err=("Found bad byte %#04x\n\tin section: %s\n\tsection offset: %d" 
+                err=("Found bad byte %#04x\n\tin section: %s\n\tsection offset: %d"
                         % (ord(char),description,offset))
                 raise(OverflowBuilderException(err))
-                    
+
 
     def __str__(self):
         """Returns string representation of this object."""
@@ -331,11 +337,11 @@ class OverflowSection(object):
     def overlaps_with(self,osection):
         """
         Boolean test for whether another OverflowSection overlaps with this one.
-        
+
         Parameters
         ----------
         osection: OverflowSection object to test for overlapping
-        
+
         Returns True or False indicating whether this section overlaps with the
         provided one.
         """
@@ -347,12 +353,12 @@ class OverflowSection(object):
 
         if my_start >= their_start and my_start <= their_end:
             return True
-        
+
         if their_start >= my_start and their_start <= my_end:
             return True
 
         return False
-        
+
 class PatternSection(OverflowSection):
     #TODO Create patterns that are free of specified bad characters
     #rather than raise exception.
@@ -363,7 +369,7 @@ class PatternSection(OverflowSection):
             if not char in badchars:
                 pruned=pruned+char
         return list(pruned)
-        
+
     @classmethod
     def pattern_create(cls,requested_length,badchars=[],logger=None):
 
@@ -398,11 +404,11 @@ class PatternSection(OverflowSection):
                 pattern+=pattern[0:(requested_length-maxlen)]
 
         return pattern
-        
+
     def __init__(self,offset,length,description=None,badchars=[],logger=None):
         """
         Class constructor.
-        
+
         Parameters
         ----------
         offset: Offset in the buffer where this section should be located.
@@ -413,25 +419,25 @@ class PatternSection(OverflowSection):
         badchars: Optional. List of restricted bytes that must be avoided.
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
-        
+
         """
-        
+
         overall_length=offset+length
         pattern=self.__class__.pattern_create(overall_length,badchars=badchars,logger=logger)
         pattern=pattern[offset:offset+length]
         if not description:
             description=("Pattern at offset %d, length %d" % (offset,length))
         super(self.__class__,self).__init__(offset,pattern,description,badchars)
-        
-    
+
+
 class RopGadget(OverflowSection):
     """
     A class to encode an integer into a four-byte section of the overflow buffer.
-    
+
     The provided numerical value is packed into a four-byte string using the
     endianness.
-    
-    
+
+
     Note
     ----
     This is only compatible with 32-bit addresses.
@@ -439,7 +445,7 @@ class RopGadget(OverflowSection):
 
     def __init__(self,endian,offset,rop_address,description=None,base_address=0,badchars=[],logger=None):
         """Class constructor.
-        
+
         Parameters
         ----------
         endianness: Endianness of the target system. (See the support.BigEndian
@@ -458,7 +464,7 @@ class RopGadget(OverflowSection):
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
         """
-        
+
         format_str=""
         if endian==BigEndian:
             format_str=">L"
@@ -466,17 +472,17 @@ class RopGadget(OverflowSection):
             format_str="<L"
         else:
             raise OverflowBuilderException("Unknown endianness specified in RopGadget")
-        
+
         if not description:
             description = ("ROP gadget: offset %d, address %#010x" % (offset,rop_address+base_address))
         rop_bytes=struct.pack(format_str,rop_address+base_address)
-        
+
         super(self.__class__,self).__init__(offset,rop_bytes,description=description,badchars=badchars)
 
 class SectionCreator(object):
     """
     A factory for overflow section objects.
-    
+
     Useful for hiding details of overflow section object creation such that
     parameters that are the same each time may be specified only once--during
     instantiation of the factory, rather than during each section's
@@ -502,23 +508,23 @@ class SectionCreator(object):
         if not logger:
             logger=Logging()
         self.logger=logger
-        
+
     def string_section(self,offset,section_string,description=None):
         """
         Create a string section from the provided string
         """
         return OverflowSection(offset,section_string,description,self.badchars)
-        
+
     def pattern_section(self,offset,length,description=None):
         """
         Create a pattern section from the provided length and offset.
         """
         return PatternSection(offset,length,description=description,badchars=self.badchars)
-        
+
     def gadget_section(self,offset,rop_address,description=None,base_address=None):
         """
         Create a ROP gadget.
-        
+
         Parameters
         ----------
         offset: The offset into the base overflow string.
@@ -530,7 +536,7 @@ class SectionCreator(object):
         base_address: Optional. The base address to be added to address
             to compute the ROP gadget's actual address in memory.  If not
             specified, then the default_base, if any, provided to the
-            constructor is used instead.        
+            constructor is used instead.
         """
         if None==base_address:
             base_address=self.base_address
@@ -546,13 +552,13 @@ if __name__=="__main__":
     # overflow_sections.append(OverflowSection(396,"AAAAAAAA","my string of As"))
     qemu_libc_base=0x40942000
     rop_g=RopGadget(BigEndian,0,0x1eb10,"one two three four rop gadget",qemu_libc_base)
-    
+
     overflow_sections.append(rop_g)
-   
+
     try:
         ofb=OverflowBuffer(48,overflow_sections)
     except Exception,e:
         print e
         exit(1)
     print str(ofb)
-    
+

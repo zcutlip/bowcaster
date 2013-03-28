@@ -1,3 +1,9 @@
+# Copyright (c) 2013
+# - Zachary Cutlip <uid000@gmail.com>
+# - Tactical Network Solutions, LLC
+# 
+# See LICENSE.txt for more details.
+# 
 import sys
 import binascii
 
@@ -25,15 +31,15 @@ def parse_badchars(badchars):
                 for part in parts:
                     badchar_list.append(part)
     return badchar_list
-    
+
 class Logging:
     """
     Basic logging class. Prints to stdout by default.
-    
+
     Attributes
     ----------
     WARN, INFO, DEBUG: Constants for log levels.
-    
+
     """
     WARN=0
     INFO=1
@@ -42,16 +48,16 @@ class Logging:
     prefixes.append(" [!] ")
     prefixes.append(" [+] ")
     prefixes.append(" [@] ")
-    
+
     def __init__(self,logfile=None):
         self.logfile=sys.stdout
         if logfile:
             self.logfile=open(logfile,"a")
-            
+
     def log_msg_start(self,msg,level=INFO):
         """
         Print the start of a log message with level decorator, but no newline.
-        
+
         Parameters
         ----------
         msg: String to print
@@ -96,14 +102,14 @@ class Logging:
     def set_log_file(self,logfile):
         """
         Set the file to use for logging to <logfile>.
-        
+
         <logfile> will be opened for appending and will become the destination
         for all future log output.
         """
         if not self.logfile == sys.stdout:
             self.logfile.close()
         self.logfile=open(logfile,"a")
-    
+
     def set_log_stdout(self,logfile):
         """
         Set log output to stdout.

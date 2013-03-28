@@ -1,3 +1,9 @@
+# Copyright (c) 2013
+# - Zachary Cutlip <uid000@gmail.com>
+# - Tactical Network Solutions, LLC
+# 
+# See LICENSE.txt for more details.
+# 
 import sys
 import os
 sys.path.insert(0,os.path.abspath('..'))

