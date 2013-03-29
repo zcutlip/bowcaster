@@ -67,9 +67,11 @@ class OverflowBuffer(object):
         problems=self.scan_for_overlaps(overflow_sections)
         if(len(problems) > 0):
             for k,v in problems.items():
-                self.logger.LOG_WARN("Section \"%s\",\n\toffset: %d\n\tlength: "+\
-                    "%d\n\toverlaps with the following sections:" %
-                    (str(k),k.offset,len(k.section_string)))
+                print str(k)
+                print k.offset
+                print len(k.section_string)
+                message="Section \"%s\",\n\toffset: %d\n\tlength: %d\n\toverlaps with the following sections:" % (str(k),k.offset,len(k.section_string))
+                self.logger.LOG_WARN(message)
                 for section in v:
                     self.logger.LOG_WARN("\"%s\"\n\toffset: %d\n\tlength: %d" %
                         (str(section),section.offset,len(section.section_string)))
