@@ -504,24 +504,36 @@ class SectionCreator(object):
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
         """
+        self.__section_list=[]
         self.endianness=endianness
         self.badchars=parse_badchars(badchars)
         self.base_address=base_address
         if not logger:
             logger=Logging()
         self.logger=logger
-
+    
+    def section_list():
+        def fget(self):
+            return self.__section_list
+        return locals()
+    
+    section_list=property(**section_list())
+    
     def string_section(self,offset,section_string,description=None):
         """
         Create a string section from the provided string
         """
-        return OverflowSection(offset,section_string,description,self.badchars)
+        section=OverflowSection(offset,section_string,description,self.badchars)
+        self.section_list.append(section)
+        return section
 
     def pattern_section(self,offset,length,description=None):
         """
         Create a pattern section from the provided length and offset.
         """
-        return PatternSection(offset,length,description=description,badchars=self.badchars)
+        section=PatternSection(offset,length,description=description,badchars=self.badchars)
+        self.section_list.append(section)
+        return section
 
     def gadget_section(self,offset,rop_address,description=None,base_address=None):
         """
