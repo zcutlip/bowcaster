@@ -204,7 +204,7 @@ class MipsXorEncoder(XorEncoder):
                 break
 
         if not self.key:
-            raise Exception("Failed to encode payload without bad bytes.")
+            raise EncoderException("Failed to encode payload without bad bytes.")
 
         self.shellcode=decoder+self.key+encoded_shellcode
 
