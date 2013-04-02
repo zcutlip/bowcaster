@@ -3,6 +3,9 @@
 # - Tactical Network Solutions, LLC
 # 
 # See LICENSE.txt for more details.
-# 
+#
+
 class EncoderException(Exception):
     pass
+import mips
+ 

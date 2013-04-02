@@ -4,3 +4,6 @@
 # 
 # See LICENSE.txt for more details.
 # 
+import connectback_payload
+import trampoline
+import trojan_dropper_payload
