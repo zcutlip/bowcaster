@@ -554,13 +554,15 @@ class SectionCreator(object):
         """
         if None==base_address:
             base_address=self.base_address
-
-        return RopGadget(self.endianness,offset,rop_address,
+        section=RopGadget(self.endianness,offset,rop_address,
                         description=description,
                         base_address=base_address,
                         badchars=self.badchars,
                         logger=self.logger)
-
+        
+        self.section_list.append(section)
+        return section
+        
 if __name__=="__main__":
     overflow_sections=[]
     # overflow_sections.append(OverflowSection(396,"AAAAAAAA","my string of As"))
