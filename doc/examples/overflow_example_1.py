@@ -105,7 +105,7 @@ if len(sys.argv) == 2:
 addr=sys.argv[1]
 port=int(sys.argv[2])
 pid=1
-#pid=connectback_server.serve_connectback()
+pid=connectback_server.serve_connectback()
 time.sleep(1)
 if pid and pid > 0:
     try:
