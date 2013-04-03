@@ -9,7 +9,15 @@ import urllib
 import urllib2
 
 class HttpClient(object):
+    """
+    A very basic HTTP client class whose primary purpose is sending a string
+    to a server via POST or GET, and to abstract the details of 
+    """
     def encode(self,data):
+        """
+        If you need to URL encode data on your own, use this,
+        otherwise set urlencode=True on send()
+        """
         if type(data) == dict:
             data=urllib.urlencode(data)
         else:
