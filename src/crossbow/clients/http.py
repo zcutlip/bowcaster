@@ -41,5 +41,6 @@ class HttpClient(object):
         
         if get_resp:
             resp_data = response.read()
+        return resp_data
         
         
