@@ -23,6 +23,7 @@ setup(name='Crossbow',
             'crossbow.payloads',
             'crossbow.payloads.mips',
             'crossbow.encoders',
-            'crossbow.servers']
+            'crossbow.servers',
+            'crossbow.clients']
         )
 
