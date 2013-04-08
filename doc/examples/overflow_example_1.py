@@ -17,15 +17,15 @@ import socket
 import signal
 import time
 
-from crossbow.overflow_development.overflowbuilder import *
-from crossbow.common.support import LittleEndian,Logging
-from crossbow.servers import ConnectbackHost
-from crossbow.servers.connectback_server import ConnectbackServer
-from crossbow.payloads.mips.connectback_payload import ConnectbackPayload
-from crossbow.encoders.mips import *
+from bowcaster.overflow_development.overflowbuilder import *
+from bowcaster.common.support import LittleEndian,Logging
+from bowcaster.servers import ConnectbackHost
+from bowcaster.servers.connectback_server import ConnectbackServer
+from bowcaster.payloads.mips.connectback_payload import ConnectbackPayload
+from bowcaster.encoders.mips import *
 
 
-#from crossbow.encoders.mips import MipsUpperAlphaEncoder
+#from bowcaster.encoders.mips import MipsUpperAlphaEncoder
 logger=Logging()
 
 CALLBACK_IP="192.168.1.2"
