@@ -8,9 +8,9 @@ import sys
 import os
 sys.path.insert(0,os.path.abspath('..'))
 
-from crossbow.overflow_development.overflowbuilder import EmptyOverflowBuffer
-from crossbow.common.support import BigEndian
-from crossbow.common.support import Logging
+from bowcaster.overflow_development.overflowbuilder import EmptyOverflowBuffer
+from bowcaster.common.support import BigEndian
+from bowcaster.common.support import Logging
 
 logger=Logging()
 logger.LOG_INFO("Creating empty overflow buffer")

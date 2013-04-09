@@ -1,4 +1,4 @@
-Crossbow Exploit Development Framework
+Bowcaster Exploit Development Framework
 
 This framework, implemented in Python, is intended to aid those developing
 exploits by providing useful set of tools and modules, such as payloads,
