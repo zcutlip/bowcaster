@@ -23,6 +23,7 @@ setup(name='Bowcaster',
             'bowcaster.payloads',
             'bowcaster.payloads.mips',
             'bowcaster.encoders',
-            'bowcaster.servers']
+            'bowcaster.servers',
+            'bowcaster.clients']
         )
 
