@@ -140,7 +140,7 @@ class ConnectbackServer(object):
         self.pid=None
         return status[1]
 
-    def serve_connectback(self):
+    def serve(self):
         """
         Serve connect-back shell.
 
@@ -181,7 +181,7 @@ class TrojanServer(ConnectbackServer):
         clientsocket.close()
 
 
-    def serve_connectback(self):
+    def serve(self):
         pid=os.fork()
         if 0!= pid:
             return pid
