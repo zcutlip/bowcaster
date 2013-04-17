@@ -5,4 +5,7 @@
 # See LICENSE.txt for more details.
 # 
 
-import http
+from http import *
+
+__all__ = ["HttpClient"]
+
