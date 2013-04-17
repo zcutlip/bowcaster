@@ -4,5 +4,5 @@
 # 
 # See LICENSE.txt for more details.
 # 
-import overflowbuilder
+from overflowbuilder import *
 __all__ = ["OverflowBuffer","EmptyOverflowBuffer","OverflowSection","PatternSection","RopGadget","SectionCreator",]
