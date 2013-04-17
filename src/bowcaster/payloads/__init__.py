@@ -4,3 +4,5 @@
 # 
 # See LICENSE.txt for more details.
 # 
+
+import mips
