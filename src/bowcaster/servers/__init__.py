@@ -5,5 +5,8 @@
 # See LICENSE.txt for more details.
 # 
 
-import connectback_server
-import http_server
+from connectback_server import *
+from http_server import *
+
+__all__=["ConnectbackServer","TrojanServer","LimitedHTTPServer","LimitedHTTPRequestHandler"
+]
