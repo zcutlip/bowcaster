@@ -4,6 +4,8 @@
 # 
 # See LICENSE.txt for more details.
 # 
-import connectback_payload
-import trampoline
-import trojan_dropper_payload
+from connectback_payload import *
+from trampoline import *
+from trojan_dropper_payload import *
+
+__all__ = ["ConnectbackPayload","Trampoline","TrojanDropper"]
