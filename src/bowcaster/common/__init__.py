@@ -5,5 +5,9 @@
 # See LICENSE.txt for more details.
 # 
 
-import support
+from support import *
+
+__all__ = ["BigEndian","LittleEndian","Logging"]
+
+
 
