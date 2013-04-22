@@ -142,6 +142,25 @@ class ConnectbackServer(object):
         signal.signal(signal.SIGINT,signal.SIG_DFL)
         self.pid=None
         return status[1]
+    
+    def shutdown(self):
+        """
+        Shut down the server.
+        
+        This should only be necessary if the server has not yet received a
+        connection (e.g., remote exploit failed)
+        or when the remote end won't close the connection.
+        
+        In the event the server has received a connection, it should shutdown
+        gracefully when the connection is closed at the remote end.
+        """
+        if not self.pid:
+            return
+        try:
+            os.kill(self.pid,signal.SIGTERM)
+        except Exception as e:
+            self.logger.LOG_WARN("Error shutting down server: %s" % str(e))
+
 
     def serve(self):
         """
