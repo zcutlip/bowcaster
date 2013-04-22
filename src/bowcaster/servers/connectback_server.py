@@ -128,6 +128,10 @@ class ConnectbackServer(object):
 
 
     def wait(self):
+        """
+        Wait for server to shut down.  The server will shut down when
+        the remote end has close the connection.
+        """
         signal.signal(signal.SIGINT,self._handler)
         self.keep_going=True
         status=(0,0)
@@ -200,7 +204,38 @@ class ConnectbackServer(object):
 
 
 class TrojanServer(ConnectbackServer):
+    """
+    A server that supports the TrojanDropper payload.
+    
+    This server will serve up each of a list of file provided to the constructor.
+    At the end of the list, if connect_back_shell is True, it will serve a shell
+    just like ConnectbackServer does.
+    
+    An ideal use case is to have the TrojanDropper download and execute a 
+    second stage payload, that in turn downloads another file (i.e. wget or nc)
+    then pops a connect-back shell.
+    
+    See stage2dropper.c in contrib for an example.
+    """
     def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False,logger=None):
+        """
+        Constructor.
+        
+        Parameters
+        ----------
+        connectback_ip: the address this server should bind to.
+        files_to_serve: A list of files to serve up to the target.  One file is
+                        served per client.
+        port: Optional. The port this server should bind to.  Default value is
+            8080.
+        startcmd: Optional.  A command string to issue to the remote host upon
+            connecting.  This could be a command to restart the exploited
+            service, or to customize the interactive shell, e.g., '/bin/sh -i'.
+        connectback_shell: Optional.  This argument defaults to True, which is
+            99% of the time is what you need.  See note.
+        logger: Optional.  A logger object is 
+        
+        """
         super(self.__class__,self).__init__(connectback_ip,port=port,startcmd=startcmd,
                                                 connectback_shell=connectback_shell,logger=logger)
         self.files_to_serve=files_to_serve
