@@ -48,14 +48,15 @@ int main(void)
     }
 
     printf("sleeping to ensure drop server is up.\n");
-    rb=0;
-    while(rb < 10)
-    {
-        rb++;
-        fprintf(stderr,"\r%.*s",rb,"..........");
-        usleep(500000);
-
-    }
+    sleep(1);
+    //rb=0;
+    // while(rb < 10)
+    // {
+    //     rb++;
+    //     fprintf(stderr,"\r%.*s",rb,"..........");
+    //     usleep(500000);
+    // 
+    // }
 
     printf("\n");
 
