@@ -17,7 +17,7 @@ import socket
 import signal
 import time
 
-from bowcaster.overflow_development.overflowbuilder import *
+from bowcaster.development.overflowbuilder import *
 from bowcaster.common.support import LittleEndian,Logging
 from bowcaster.servers.connectback_server import TrojanServer
 from bowcaster.payloads.mips import TrojanDropper

