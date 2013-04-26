@@ -167,7 +167,9 @@ class OverflowBuffer(object):
             self.logger.LOG_INFO(section.description)
         self.logger.LOG_INFO("")
         self.logger.LOG_INFO("************************************")
-
+    
+    def __len__(self):
+        return self.len()
 
     def __str__(self):
         return self.overflow_string
