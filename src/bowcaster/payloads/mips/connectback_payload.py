@@ -140,6 +140,7 @@ class ConnectbackPayload:
         -----------
         shellcode:  The string representing the payload's shellcode, ready to add
                     to an exploit buffer.
+        endianness: The endianness of this payload object.
         
         Notes:
         ------
@@ -147,8 +148,8 @@ class ConnectbackPayload:
         and spaces, your IP address or port may introduce bad characters.  If so,
         you may need to use an encoder.
         """
-        self.connectback_pid=None
-
+        
+        self.endianness=endianness        
         port=int(port)
 
         shellcode=self.__class__.shellcodes[endianness]

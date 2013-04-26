@@ -107,6 +107,7 @@ class TrojanDropper:
         and spaces, your IP address or port may introduce bad characters.  If so,
         you may need to use an encoder.
         """
+        self.endianness=endianness
         port=int(port)
         shellcode=self.__class__.shellcodes[endianness]
         i = 0
