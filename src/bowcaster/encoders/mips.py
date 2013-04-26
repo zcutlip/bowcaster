@@ -132,6 +132,11 @@ class MipsXorEncoder(XorEncoder):
         Parameters
         ----------
         payload: The payload to be encoded.  Must have a 'shellcode' string.
+                 This can be either a single payload object or a list object of
+                 one or more payloads.  If there is more than one payload, the 
+                 shellcode attributes will be concatenated in the order they are
+                 found in the list.  The endianness from the first payload in
+                 the list will be used.
         badchars: Optional. List of restricted bytes that must be avoided.
         key: Optional.  The encoder key to use.  If provided, none will be
             generated.  If the payload encoded with this key contains bytes
@@ -157,24 +162,31 @@ class MipsXorEncoder(XorEncoder):
         (imported from bowcaster.common.support)
         """
 
-       
+        if not type(payload)==list:
+            payload=[payload]
+            
+        to_encode=""
+        
+        for p in payload:
+            to_encode+=p.shellcode
+        
         if not logger:
             logger=Logging()
 
         self.logger=logger
-        self.endianness=payload.endianness
+        self.endianness=payload[0].endianness
         self.badchars=parse_badchars(badchars)
         self.logger.LOG_DEBUG("bad char count: %d" % len(self.badchars))
         generate_key=False
 
         self.key=key
 
-        if len(payload.shellcode) % 4 != 0:
+        if len(to_encode) % 4 != 0:
             raise "Payload length must be a multiple of 4 bytes."
 
-        size=(len(payload.shellcode)/4)+1
+        size=(len(to_encode)/4)+1
         if size > 0xffff:
-            raise "Payload length %d is too long." % len(payload.shellcode)
+            raise "Payload length %d is too long." % len(to_encode)
 
         size = size ^ 0xffff
 
@@ -207,7 +219,7 @@ class MipsXorEncoder(XorEncoder):
                 self.key=self.__generate_key(tried_keys,self.badchars)
                 tried_keys.append(self.key)
 
-            encoded_shellcode=self.encode(payload.shellcode,self.key)
+            encoded_shellcode=self.encode(to_encode,self.key)
             encoded_badchars=self.__has_badchars(encoded_shellcode,self.badchars)
 
             if len(encoded_badchars) > 0:
