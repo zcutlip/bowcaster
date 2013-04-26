@@ -131,7 +131,8 @@ class ConnectbackPayload:
         Parameters:
         -----------
         connectback_ip: IP Address to connect back to.
-        endianness: Endianness of the target. one of LittleEndian or BigEndian.
+        endianness: Endianness of the target. one of LittleEndian or BigEndian,
+                    (imported from bowcaster.common.support).
         port:   Optional parameter specifying TCP port to connect back to.
                 Defaults to 8080.
                 
