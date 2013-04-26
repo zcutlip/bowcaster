@@ -127,13 +127,11 @@ class MipsXorEncoder(XorEncoder):
         return key
 
 
-    def __init__(self,payload,endianness,badchars=[],key=None,logger=None):
+    def __init__(self,payload,badchars=[],key=None,logger=None):
         """
         Parameters
         ----------
         payload: The payload to be encoded.  Must have a 'shellcode' string.
-        endianness: Endianness of the target system. (See the support.BigEndian
-            and support.LittleEndian)
         badchars: Optional. List of restricted bytes that must be avoided.
         key: Optional.  The encoder key to use.  If provided, none will be
             generated.  If the payload encoded with this key contains bytes
@@ -142,14 +140,29 @@ class MipsXorEncoder(XorEncoder):
             instantiated with output to stdout.
 
         Raises EncoderException
+        
+
+        
+        Attributes
+        ----------
+        shellcode:  The string representing the encoded payload's shellcode, ready to add
+                    to an exploit buffer.
+        endianness: The endianness of this shellcode.
+        
+        Notes
+        -----
+        Your payload must have a shellcode attribute, which must be a string
+        representation of the payload to be encoded.  It also must have an
+        endianness attribute, which is one of LittleEndian or BigEndian
+        (imported from bowcaster.common.support)
         """
 
-
+       
         if not logger:
             logger=Logging()
 
         self.logger=logger
-        self.endianness=endianness
+        self.endianness=payload.endianness
         self.badchars=parse_badchars(badchars)
         self.logger.LOG_DEBUG("bad char count: %d" % len(self.badchars))
         generate_key=False
@@ -168,7 +181,7 @@ class MipsXorEncoder(XorEncoder):
         sizelo=size & 0xff
         sizehi=size >> 8
 
-        decoder=self.__class__.decoders[endianness]
+        decoder=self.__class__.decoders[self.endianness]
         decoder=decoder.replace("SIZ1",chr(sizehi))
         decoder=decoder.replace("SIZ2",chr(sizelo)) #SIZ1SIZ2 == sizehisizelo
         decoder_badchars=self.__has_badchars(decoder,self.badchars)
