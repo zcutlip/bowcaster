@@ -224,7 +224,8 @@ class TrojanServer(ConnectbackServer):
 
     See stage2dropper.c in contrib for an example.
     """
-    def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False,logger=None):
+    def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False,
+            logger=None,connected_event=None):
         """
         Constructor.
 
@@ -247,12 +248,17 @@ class TrojanServer(ConnectbackServer):
                                                 connectback_shell=connectback_shell,logger=logger)
         self.files_to_serve=files_to_serve
         self.connectback_shell=connectback_shell
+        self.connected_event=connected_event
 
 
     def _serve_file_to_client(self,filename,serversocket):
         data=open(filename,"r").read();
         (clientsocket,address) = serversocket.accept()
+
         clientsocket.send(data)
+
+        if self.connected_event:
+            self.connected_event.set()
 
         clientsocket.shutdown(socket.SHUT_RDWR)
         clientsocket.close()
