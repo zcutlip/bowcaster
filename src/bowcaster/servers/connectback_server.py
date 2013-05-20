@@ -95,6 +95,7 @@ class ConnectbackServer(object):
         self.logger.LOG_INFO("Target has phoned home.")
         if self.connected_event:
             # let the caller know they have a connection
+            self.logger.LOG_INFO("asadfsa")
             self.connected_event.set()
 
         fd_to_file={clientsocket.fileno:clientsocket,sys.stdin.fileno():sys.stdin}
