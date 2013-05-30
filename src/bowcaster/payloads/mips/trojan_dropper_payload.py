@@ -16,7 +16,7 @@ class TrojanDropper:
     This is a MIPS Linux connect-back payload that downloads and execs() a file.
     
     It will establish a TCP connection to the specified port and address, read
-    off the socket to a file called "/tmp/drp", then exec() that file.
+    off the socket to a file called "/var/drp", then exec() that file.
     The file should be served as a raw stream of bytes.  When the server has
     sent the entire file, it should close the connection.
     
