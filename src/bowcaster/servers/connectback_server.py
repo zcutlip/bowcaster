@@ -98,7 +98,7 @@ class ConnectbackServer(object):
             # let the caller know they have a connection
             self.connected_event.set()
 
-        fd_to_file={clientsocket.fileno:clientsocket,sys.stdin.fileno():sys.stdin}
+
         inputlist=[clientsocket,sys.stdin]
 
 
@@ -250,10 +250,11 @@ class TrojanServer(ConnectbackServer):
 
         """
         super(self.__class__,self).__init__(connectback_ip,port=port,startcmd=startcmd,
-                                                connectback_shell=connectback_shell,logger=logger)
+                                        connectback_shell=connectback_shell,logger=logger,
+                                        connected_event=connected_event)
         self.files_to_serve=files_to_serve
         self.connectback_shell=connectback_shell
-        self.connected_event=connected_event
+
 
     def _sanity_check_files(self,files):
         problems={}
