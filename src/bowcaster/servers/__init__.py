@@ -5,8 +5,13 @@
 # See LICENSE.txt for more details.
 # 
 
+class ServerException(Exception):
+    pass
+
 from connectback_server import *
 from http_server import *
+
+
 
 __all__=["ConnectbackServer","TrojanServer","LimitedHTTPServer","LimitedHTTPRequestHandler"
 ]

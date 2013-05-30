@@ -11,6 +11,7 @@ import os
 import select
 import traceback
 import errno
+from ..servers import ServerException
 from ..common.support import Logging
 
 class ConnectbackServer(object):
@@ -132,6 +133,9 @@ class ConnectbackServer(object):
         Wait for server to shut down.  The server will shut down when
         the remote end has close the connection.
         """
+        if not self.pid:
+            return None
+            
         signal.signal(signal.SIGINT,self._handler)
         self.keep_going=True
         status=(0,0)
@@ -175,17 +179,19 @@ class ConnectbackServer(object):
 
         If connectback_shell is False and startcmd is None, this function
         returns None immediately without forking.
-
+        
+        If server fails to bind an error is logged, and any exception is passed 
+        up to the caller.
         """
 
         if self.connectback_shell or self.startcmd:
             if self.pid:
-                raise Exception("There is an existing child process. Pid: %d" %self.pid)
+                raise ServerException("There is an existing child process. Pid: %d" %self.pid)
             try:
                 serversocket=self._server()
             except Exception as e:
                 self.logger.LOG_WARN("There was an error creating server socket: %s" % str(e))
-                return None
+                raise e
             self.pid=os.fork()
             if self.pid and self.pid > 0:
                 serversocket.close()
@@ -241,7 +247,16 @@ class TrojanServer(ConnectbackServer):
         self.files_to_serve=files_to_serve
         self.connectback_shell=connectback_shell
 
-
+    def _sanity_check_files(self,files):
+        problems={}
+        for file in files:
+            try:
+                open(file,"r")
+            except Exception as e:
+                problems[file]=e
+        
+        return problems
+        
     def _serve_file_to_client(self,filename,serversocket):
         data=open(filename,"r").read();
         (clientsocket,address) = serversocket.accept()
@@ -263,8 +278,15 @@ class TrojanServer(ConnectbackServer):
             serversocket=self._server()
         except Exception as e:
             self.logger.LOG_WARN("There was an error creating server socket: %s" % str(e))
-            return None
-            
+            raise e
+        problems=self._sanity_check_files(self.files_to_serve)
+        
+        if len(problems) > 0:
+            msg="There were problems with the following files:"
+            for file,e in problems.items():
+                msg +="\n\t%s: %s" % (file,str(e))
+            raise ServerException(msg)
+        
         self.pid=os.fork()
         if self.pid:
             return self.pid
