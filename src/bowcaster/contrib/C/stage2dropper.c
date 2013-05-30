@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 
-#define STAGE2_DROP "/tmp/drp2"
+#define STAGE2_DROP "/var/drp2"
 
 int main(void)
 {

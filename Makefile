@@ -4,5 +4,5 @@ install:
 clean:
 	-find . -name \*.pyc | xargs rm
 
-distclean:
+distclean: clean
 	-rm -rf ./build
