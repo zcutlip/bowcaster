@@ -24,6 +24,8 @@ setup(name='Bowcaster',
             'bowcaster.payloads.mips',
             'bowcaster.encoders',
             'bowcaster.servers',
-            'bowcaster.clients']
+            'bowcaster.clients'],
+        scripts=["src/standalone/connectbackserver",
+                 "src/standalone/trojanserver"]
         )
 
