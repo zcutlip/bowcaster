@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+import sys
+from bowcaster.servers import TrojanServer
+
+def main(filename,port=None):
+    if not port:
+        port=8080
+    ip_address="0.0.0.0"
+    server=TrojanServer(ip_address,[filename],port=port,connectback_shell=False)
+
+    server.serve()
+    server.wait()
+
+if __name__ == "__main__":
+    port=None
+
+    filename=sys.argv[1]
+    
+    if len(sys.argv) > 2:
+        port=sys.argv[2]
+
+    main(filename,port=port)
