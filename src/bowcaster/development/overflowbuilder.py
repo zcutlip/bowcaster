@@ -389,23 +389,22 @@ class PatternSection(OverflowSection):
             logger.LOG_DEBUG("numerals: %s" % str(numerals))
 
         maxlen=len(upper_alpha)*len(lower_alpha)*len(numerals)
+        if maxlen < requested_length:
+            raise OverflowBuilderException("Maximum pattern length, %d is less than requested length %d.")
+            
         buildlen=maxlen if requested_length > maxlen else requested_length
         pattern=""
-        try:
-            for upperchar in upper_alpha:
-                for lowerchar in lower_alpha:
-                    for numberchar in numerals:
-                        subpattern="%c%c%c"%(upperchar,lowerchar,numberchar)
-                        remaining = buildlen-len(pattern)
-                        if remaining <= 0:
-                            raise Exception
-                        elif remaining <= 3:
-                            pattern+=subpattern[0:remaining]
-                        else:
-                            pattern+=subpattern
-        except:
-            if maxlen < requested_length:
-                pattern+=pattern[0:(requested_length-maxlen)]
+        for upperchar in upper_alpha:
+            for lowerchar in lower_alpha:
+                for numberchar in numerals:
+                    subpattern="%c%c%c"%(upperchar,lowerchar,numberchar)
+                    remaining = buildlen-len(pattern)
+                    if remaining <= 0:
+                        raise Exception
+                    elif remaining <= 3:
+                        pattern+=subpattern[0:remaining]
+                    else:
+                        pattern+=subpattern
 
         return pattern
 
