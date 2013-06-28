@@ -23,8 +23,6 @@ from bowcaster.servers.connectback_server import TrojanServer
 from bowcaster.payloads.mips import TrojanDropper
 from bowcaster.encoders.mips import *
 
-
-#from bowcaster.encoders.mips import MipsUpperAlphaEncoder
 logger=Logging()
 
 CALLBACK_IP="192.168.127.10"
