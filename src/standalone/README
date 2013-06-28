@@ -1,0 +1,6 @@
+Stand-alone programs using Bowcaster code.
+
+You can fire these up if it isn't convenient to use the corresponding Bowcaster code programmatically from your exploit code.
+
+trojanserver: A stand-alone Trojan server that uses the TrojanSever class
+connectbackserver: A stand-alone connect-back server using the ConnectbackServer class.
