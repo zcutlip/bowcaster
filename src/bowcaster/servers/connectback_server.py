@@ -311,7 +311,7 @@ class TrojanServer(ConnectbackServer):
 
 
 
-            if self.connectback_shell == True:
+            if self.connectback_shell or self.startcmd:
                 self.logger.LOG_INFO("Serving connectback_shell.")
                 self._serve_connectback_shell(serversocket)
 
