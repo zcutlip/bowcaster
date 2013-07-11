@@ -392,19 +392,23 @@ class PatternSection(OverflowSection):
         if maxlen < requested_length:
             raise OverflowBuilderException("Maximum pattern length, %d is less than requested length %d.")
             
-        buildlen=maxlen if requested_length > maxlen else requested_length
+        
         pattern=""
-        for upperchar in upper_alpha:
-            for lowerchar in lower_alpha:
-                for numberchar in numerals:
-                    subpattern="%c%c%c"%(upperchar,lowerchar,numberchar)
-                    remaining = buildlen-len(pattern)
-                    if remaining <= 0:
-                        raise Exception
-                    elif remaining <= 3:
-                        pattern+=subpattern[0:remaining]
-                    else:
-                        pattern+=subpattern
+        try:
+            for upperchar in upper_alpha:
+                for lowerchar in lower_alpha:
+                    for numberchar in numerals:
+                        subpattern="%c%c%c"%(upperchar,lowerchar,numberchar)
+                        remaining = requested_length-len(pattern)
+                        if remaining <= 0:
+                            #dirty trick to break out of nested loops
+                            raise OverflowBuilderException
+                        elif remaining <= 3:
+                            pattern+=subpattern[0:remaining]
+                        else:
+                            pattern+=subpattern
+        except OverflowBuilderException:
+            pass
 
         return pattern
 
