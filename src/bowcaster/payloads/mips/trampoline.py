@@ -43,6 +43,9 @@ class Trampoline(object):
 
         Raises EncoderException if the offset is outside of the MAX_BACK_JUMP -
             MAX_FWD_JUMP range.
+            
+        Note: 1028, or 0x0404, is the smallest amount you can trampoline forward
+             without a NULL byte in the encoded beq instruction.
         """
         if (offset < self.__class__.MAX_BACK_JUMP or
                 offset > self.__class__.MAX_FWD_JUMP):
