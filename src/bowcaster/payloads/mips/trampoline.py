@@ -6,6 +6,7 @@
 # 
 import struct
 import string
+from collections import OrderedDict
 from ...common.support import BigEndian,LittleEndian
 from ...common import hackers_quotes
 
@@ -69,4 +70,6 @@ class Trampoline(object):
         if hackers_quotes:
             hackers_quotes.log_random_quote()
 
+        self.details=details=OrderedDict()
+        details["jump_offset"]=offset
 

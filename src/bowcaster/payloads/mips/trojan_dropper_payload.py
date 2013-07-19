@@ -8,6 +8,7 @@ import string
 import socket
 import os
 import signal
+from collections import OrderedDict
 from ...common.support import BigEndian,LittleEndian
 from ...common import hackers_quotes
 
@@ -178,6 +179,8 @@ class TrojanDropper:
         
         if hackers_quotes:
             hackers_quotes.log_random_quote()
-
-
+        self.details=details=OrderedDict()
+        details["connectback_ip"]=connectback_ip
+        details["port"]=str(port)
+        
 

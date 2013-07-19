@@ -9,6 +9,7 @@ import string
 import socket
 import signal
 import os
+from collections import OrderedDict
 from ...common.support import BigEndian,LittleEndian
 from ...common import hackers_quotes
 
@@ -165,5 +166,10 @@ class ConnectbackPayload:
         self.shellcode=shellcode
         if hackers_quotes:
             hackers_quotes.log_random_quote()
+        
+        self.details=details=OrderedDict()
+        details["connectback_ip"]=connectback_ip
+        details["port"]=str(port)
+        
 
 
