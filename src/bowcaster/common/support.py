@@ -24,8 +24,29 @@ def pretty_string(string):
     return p_string
 
 BigEndian,LittleEndian=range(2)
+
+class Endianness(object):
+    Names={}
+    Names[BigEndian]="BigEndian"
+    Names[LittleEndian]="LittleEndian"
+    
+    @classmethod
+    def from_name(cls,name):
+        obj=None
+        for n in cls.Names:
+            if name == cls.Names[n]:
+                obj=cls(n)
+                break
+        if not obj:
+            raise Exception("Endianness for %s name not found" % name)
+        
+        return obj
+    def __init__(self,endianness):
+        self.value=endianness
+        self.name=self.__class__.Names[endianness]
+    
 """
-Endianness constants to pass to constructors ofendianness-sensitive classes.
+Endianness constants to pass to constructors of endianness-sensitive classes.
 """
 def parse_badchars(badchars):
     badchar_list=[]
