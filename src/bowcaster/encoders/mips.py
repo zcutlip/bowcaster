@@ -7,6 +7,7 @@
 import string
 import random
 import struct
+from collections import OrderedDict
 from ..encoders import EncoderException
 from xorencoder import XorEncoder
 from ..common.support import BigEndian,LittleEndian
@@ -91,8 +92,7 @@ class MipsXorEncoder(XorEncoder):
                 badchar_list.append(char)
 
         return badchar_list
-
-
+        
     def __pack_key(self,key):
         if self.endianness==BigEndian:
             packed_key=struct.pack('>I',key)
@@ -119,7 +119,6 @@ class MipsXorEncoder(XorEncoder):
                         break
                 key=key | byte << (i * 8)
             self.logger.LOG_DEBUG("Key: %#010x" % key)
-            key=self.__pack_key(key)
 
             if not key in triedkeys:
                 break
@@ -164,6 +163,7 @@ class MipsXorEncoder(XorEncoder):
 
         if not type(payload)==list:
             payload=[payload]
+        self.payloads=payload
             
         to_encode=""
         
@@ -201,38 +201,46 @@ class MipsXorEncoder(XorEncoder):
         if len(decoder_badchars) > 0:
             raise EncoderException("Decoder stub contains bad bytes: %s" % str(decoder_badchars))
         self.logger.LOG_DEBUG("No bad bytes in decoder stub.")
-
+        
+        tried_keys=[]
         if not self.key:
+            self.packed_key=None
             attempts=self.__class__.MAX_ATTEMPTS
         else:
             attempts=1
-            self.key=self.__pack_key(self.key)
-            key_badchars=self.__has_badchars(self.key,self.badchars)
+            self.packed_key=self.__pack_key(self.key)
+            key_badchars=self.__has_badchars(self.packed_key,self.badchars)
             if(len(key_badchars) > 0):
                 raise EncoderException("Provided XOR key has bad bytes: %s" % str(key_badchars))
 
 
-        tried_keys=[self.key]
+
 
         while attempts > 0:
-            if not self.key:
+            if not self.packed_key:
                 self.key=self.__generate_key(tried_keys,self.badchars)
-                tried_keys.append(self.key)
+                self.packed_key=self.__pack_key(self.key)
+            
+            tried_keys.append(self.packed_key)
 
-            encoded_shellcode=self.encode(to_encode,self.key)
+            encoded_shellcode=self.encode(to_encode,self.packed_key)
             encoded_badchars=self.__has_badchars(encoded_shellcode,self.badchars)
 
             if len(encoded_badchars) > 0:
-                self.key=None
+                self.packed_key=self.key=None
                 attempts -= 1
             else:
                 break
 
-        if not self.key:
+        if not self.packed_key:
             raise EncoderException("Failed to encode payload without bad bytes.")
 
-        self.shellcode=decoder+self.key+encoded_shellcode
-
+        self.shellcode=decoder+self.packed_key+encoded_shellcode
+        
+        self.details=details=OrderedDict()
+        details["key"]="%#010x" % self.key
+        
+        
     def pretty_string(self):
         return pretty_string(self.shellcode)
 
