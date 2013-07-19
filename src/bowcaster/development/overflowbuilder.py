@@ -5,7 +5,7 @@
 # See LICENSE.txt for more details.
 # 
 import struct
-
+from collections import OrderedDict
 from ..common.support import Logging
 from ..common.support import BigEndian,LittleEndian
 from ..common.support import pretty_string
@@ -41,7 +41,9 @@ class OverflowBuffer(object):
 
         Raises OverflowBuilderException
         """
-
+        self.arch="MIPS"
+        self.os="Linux"
+        
         self.overflow_string=None
         self.endianness=endianness
         self.logger=logger
@@ -332,7 +334,13 @@ class OverflowSection(object):
                 err=("Found bad byte %#04x\n\tin section: %s\n\tsection offset: %d"
                         % (ord(char),description,offset))
                 raise(OverflowBuilderException(err))
-
+        
+        self.details=details={}
+        details["type"]=self.__class__.__name__
+        details["offset"]=self.offset
+        details["description"]=self.description
+        details["section_string"]=self.section_string
+        
 
     def __str__(self):
         """Returns string representation of this object."""
@@ -435,7 +443,12 @@ class PatternSection(OverflowSection):
         if not description:
             description=("Pattern at offset %d, length %d" % (offset,length))
         super(self.__class__,self).__init__(offset,pattern,description,badchars)
-
+        
+        self.details=details=OrderedDict()
+        details["type"]=self.__class__.__name__
+        details["offset"]=self.offset
+        details["description"]=self.description
+        details["length"]=length
 
 class RopGadget(OverflowSection):
     """
@@ -486,6 +499,69 @@ class RopGadget(OverflowSection):
 
         super(self.__class__,self).__init__(offset,rop_bytes,description=description,badchars=badchars)
 
+        self.details=details=OrderedDict()
+        details["type"]=self.__class__.__name__
+        details["offset"]=self.offset
+        details["description"]=self.description
+        details["rop_address"]="%#010x" % rop_address
+        details["base_address"]="%#010x" % base_address
+
+class PayloadSection(OverflowSection):
+    
+    def __init__(self,offset,payload,description=None,badchars=[],logger=None):
+        self.payload=payload
+        self.shellcode=payload.shellcode
+        payload_class=self.payload.__class__.__name__
+        
+        if not description:
+            description = ("Payload section: offset %d, payload: %s" % (offset,payload_class)) 
+        
+        super(self.__class__,self).__init__(offset,self.shellcode,description=description,badchars=badchars)
+        
+        self.details=details=OrderedDict()
+        details["type"]=self.__class__.__name__
+        details["offset"]=self.offset
+        details["payload_class"]=payload_class
+        for k,v in payload.details.items():
+            details[k]=v
+
+class EncodedPayloadSection(OverflowSection):
+    
+    def __init__(self,offset,encoded_payload,description=None,logger=None):
+        self.encoded_payload=encoded_payload
+        self.payloads=encoded_payload.payloads
+        
+        self.shellcode=encoded_payload.shellcode
+        encoded_payload_class=encoded_payload.__class__.__name__
+        
+        if not description:
+            description=("Encoded payload section: offset %d, encoder: %s" %
+                             (offset,encoded_payload_class))
+        super(self.__class__,self).__init__(offset,self.shellcode,
+                                                   description=description,
+                                                   badchars=encoded_payload.badchars)
+        
+        self.details=details=OrderedDict()
+        details["type"]=self.__class__.__name__
+        details["offset"]=offset
+        details["encoder_class"]=encoded_payload_class
+        for k,v in encoded_payload.details.items():
+            details[k]=v
+            
+        payloads=[]
+        
+        for payload in encoded_payload.payloads:
+            payload_details=OrderedDict()
+            payload_class=payload.__class__.__name__
+            payload_details["payload_class"]=payload_class
+            for k,v in payload.details.items():
+                payload_details[k]=v
+            payloads.append(payload_details)
+
+        details["payloads"]=payloads
+        
+        
+        
 class SectionCreator(object):
     """
     A factory for overflow section objects.
@@ -576,6 +652,22 @@ class SectionCreator(object):
                         badchars=self.badchars,
                         logger=self.logger)
         
+        self.section_list.append(section)
+        return section
+    
+    def payload_section(self,offset,payload,description=None):
+        section=PayloadSection(offset,payload,
+                                     description=Description,
+                                     badchars=self.badchars,
+                                     logger=self.logger)
+    
+        self.section_list.append(section)
+        return section
+        
+    def encoded_payload_section(self,offset,payload,description=None):
+        section=EncodedPayloadSection(offset,payload,
+                                     description=description,
+                                     logger=self.logger)
         self.section_list.append(section)
         return section
         
