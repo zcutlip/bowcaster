@@ -9,6 +9,7 @@ import string
 import socket
 import signal
 import os
+from collections import OrderedDict
 from ...common.support import BigEndian,LittleEndian
 
 class ConnectbackPayload:
@@ -162,5 +163,10 @@ class ConnectbackPayload:
         shellcode = shellcode.replace("PORT2",chr(port & 0xFF))
 
         self.shellcode=shellcode
+        
+        self.details=details=OrderedDict()
+        details["connectback_ip"]=connectback_ip
+        details["port"]=str(port)
+        
 
 
