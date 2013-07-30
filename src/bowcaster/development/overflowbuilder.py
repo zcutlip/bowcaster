@@ -23,7 +23,7 @@ class OverflowBuffer(object):
     addresses and a payload string.
     """
 
-    def __init__(self,endianness,length,overflow_sections=None,logger=None):
+    def __init__(self,endianness,length,overflow_sections=None,logger=None,badchars=[]):
         """
         Class constructor.
 
@@ -43,17 +43,18 @@ class OverflowBuffer(object):
         """
         self.arch="MIPS"
         self.os="Linux"
-        
+        self.badchars=badchars
         self.overflow_string=None
         self.endianness=endianness
         self.logger=logger
+        
         if not self.logger:
             self.logger=Logging()
         if None == overflow_sections:
             overflow_sections = []
 
         self.overflow_sections=overflow_sections
-        ostr=PatternSection.pattern_create(length)
+        ostr=PatternSection.pattern_create(length,badchars=badchars)
         if len(ostr) < length:
             raise OverflowBuilderException("Maximum overflow length is only %d. Can't build string %d long.\n" %(len(ostr),length))
         for osect in overflow_sections:
@@ -328,7 +329,8 @@ class OverflowSection(object):
                  (offset,len(section_string)))
 
         self.description=description
-
+        self.badchars=badchars
+        
         for char in badchars:
             if char in section_string:
                 err=("Found bad byte %#04x\n\tin section: %s\n\tsection offset: %d"
@@ -522,6 +524,7 @@ class PayloadSection(OverflowSection):
         details["type"]=self.__class__.__name__
         details["offset"]=self.offset
         details["payload_class"]=payload_class
+        details["description"]=description
         for k,v in payload.details.items():
             details[k]=v
 
@@ -545,6 +548,7 @@ class EncodedPayloadSection(OverflowSection):
         details["type"]=self.__class__.__name__
         details["offset"]=offset
         details["encoder_class"]=encoded_payload_class
+        details["description"]=description
         for k,v in encoded_payload.details.items():
             details[k]=v
             
@@ -554,6 +558,7 @@ class EncodedPayloadSection(OverflowSection):
             payload_details=OrderedDict()
             payload_class=payload.__class__.__name__
             payload_details["payload_class"]=payload_class
+            payload_details["description"]="Payload object."
             for k,v in payload.details.items():
                 payload_details[k]=v
             payloads.append(payload_details)
