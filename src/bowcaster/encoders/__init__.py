@@ -7,5 +7,6 @@
 
 class EncoderException(Exception):
     pass
-import mips
- 
+from mips import *
+
+__all__=["MipsXorEncoder"]
