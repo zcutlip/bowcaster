@@ -168,8 +168,16 @@ class ConnectbackPayload:
             hackers_quotes.log_random_quote()
         
         self.details=details=OrderedDict()
+        self.description="TCP connect-back shell. Target address & port=%s:%s" % (connectback_ip,str(port))
+        details["description"]=self.description
         details["connectback_ip"]=connectback_ip
         details["port"]=str(port)
         
-
+    @classmethod
+    def reconstitute(cls,details):
+        connectback_ip=details["connectback_ip"]
+        endianness=details["endianness"]
+        port=details["port"]
+        
+        return cls(connectback_ip,endianness,port=port)
 
