@@ -125,7 +125,7 @@ class MipsXorEncoder(XorEncoder):
 
         return key
 
-
+    
     def __init__(self,payload,badchars=[],key=None,logger=None):
         """
         Parameters
@@ -164,7 +164,7 @@ class MipsXorEncoder(XorEncoder):
         if not type(payload)==list:
             payload=[payload]
         self.payloads=payload
-            
+        
         to_encode=""
         
         for p in payload:
@@ -172,7 +172,8 @@ class MipsXorEncoder(XorEncoder):
         
         if not logger:
             logger=Logging()
-
+        
+        self.badchars=badchars
         self.logger=logger
         self.endianness=payload[0].endianness
         self.badchars=parse_badchars(badchars)
@@ -213,9 +214,6 @@ class MipsXorEncoder(XorEncoder):
             if(len(key_badchars) > 0):
                 raise EncoderException("Provided XOR key has bad bytes: %s" % str(key_badchars))
 
-
-
-
         while attempts > 0:
             if not self.packed_key:
                 self.key=self.__generate_key(tried_keys,self.badchars)
@@ -236,8 +234,12 @@ class MipsXorEncoder(XorEncoder):
             raise EncoderException("Failed to encode payload without bad bytes.")
 
         self.shellcode=decoder+self.packed_key+encoded_shellcode
-        
+        payload_or_payloads="payload"
+        if len(self.payloads) > 1:
+            payload_or_payloads+="s"
+        self.description="MIPS XOR decoder stub with %d %s." % (len(self.payloads),payload_or_payloads)
         self.details=details=OrderedDict()
+        details["description"]=self.description
         details["key"]="%#010x" % self.key
         
         
@@ -250,4 +252,14 @@ class MipsXorEncoder(XorEncoder):
             data=data+"\\%c" % ord(c)
 
         return data
+    
+    @classmethod
+    def reconstitute(cls,details):
+        payloads=details["payloads"]
+        badchars=details["bad characters"]
+        key=int(details["key"],0)
+        print key
+        print "%#010x" % key
+        return cls(payloads,badchars=badchars,key=key)
+        
 
