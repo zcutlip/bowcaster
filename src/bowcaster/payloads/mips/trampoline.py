@@ -73,3 +73,10 @@ class Trampoline(object):
         self.details=details=OrderedDict()
         details["jump_offset"]=offset
 
+    @classmethod
+    def reconstitute(cls,details):
+        offset=int(details["jump_offset"],0)
+        endianness=details["endianness"]
+        
+        return cls(offset,endianness)
+
