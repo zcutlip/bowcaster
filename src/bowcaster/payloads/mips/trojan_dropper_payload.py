@@ -181,5 +181,11 @@ class TrojanDropper:
         self.details=details=OrderedDict()
         details["connectback_ip"]=connectback_ip
         details["port"]=str(port)
+    
+    @classmethod
+    def reconstitute(cls,details):
+        connectback_ip=details["connectback_ip"]
+        endianness=details["endianness"]
+        port=details["port"]
         
-
+        return cls(conenctback_ip,endianness,port=port)
