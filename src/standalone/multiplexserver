@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+import sys
+from bowcaster.servers import MultiplexingServer
+
+def main(ip_address,port=None):
+    addresses=["127.0.0.1","127.0.0.1"]
+    if port:
+        server=MultiplexingServer(ip_address,addresses,port=port)
+    else:
+        server=MultiplexingServer(ip_address,addresses)
+
+    server.serve()
+    server.wait()
+
+if __name__ == "__main__":
+    ip_address="0.0.0.0"
+    port=None
+
+    if len(sys.argv) > 1:
+        ip_address=sys.argv[1]
+
+    if len(sys.argv) > 2:
+        port=sys.argv[2]
+
+    main(ip_address,port=port)
