@@ -8,7 +8,26 @@ from bowcaster.common.support import Logging
 from bowcaster.common.support import LittleEndian,BigEndian
 from bowcaster.development.overflowbuilder import OverflowBuffer,RopGadget,PayloadSection,EncodedPayloadSection
 from bowcaster.payloads.mips import ConnectbackPayload
+from bowcaster.payloads.mips import Trampoline
+from bowcaster.payloads.mips import TrojanDropper
 from bowcaster.encoders import *
+
+"""
+INI name constants
+"""
+#INI section names
+MAIN_SECTION="Overflow Description"
+#INI keys
+SECTION_BUFFER_LEN="buffer_length"
+SECTION_BADCHARS="bad_characters"
+SECTION_TYPE="type"
+SECTION_OFFSET="offset"
+SECTION_DESCRIPTION="description"
+SECTION_BASE_ADDRESS="base_address"
+SECTION_ROP_ADDRESS="rop_address"
+SECTION_ENCODER_CLASS="encoder_class"
+SECTION_ENCODER_KEY="key"
+SECTION_PAYLOADS="payloads"
 
 def class_by_name(name):
     """
@@ -24,7 +43,6 @@ def class_by_name(name):
     return identifier
     
 
-MAIN_SECTION="Overflow Description"
 
 class OverflowConfigException(Exception):
     def __init__(self,message,details=None):
@@ -45,7 +63,10 @@ class ConfigAddress(object):
 class ConfigBadchars(list):
     def __init__(self,badchar_string):
         super(self.__class__,self).__init__()
-        badints=badchar_string.split(',')
+        badints=[]
+        if len(badchar_string) > 0:
+            badints=badchar_string.split(',')
+        
         for bad in badints:
             badint=int(bad,0)
             self.append(chr(badint))
@@ -74,15 +95,15 @@ class ConfigEndianness(object):
 
 class OverflowConfigParser(object):
     def _gadget_section(details):
-        if details["type"] != "RopGadget":
-            raise OverflowConfigException("Wrong type specified: %s. Expecting %s." % (details["type"],"RopGadget"))
+        if details[SECTION_TYPE] != "RopGadget":
+            raise OverflowConfigException("Wrong type specified: %s. Expecting %s." % (details[SECTION_TYPE],"RopGadget"))
         endianness=details["endianness"]
         
-        offset=int(details["offset"],0)
-        rop_address=ConfigAddress(details["rop_address"],16)
-        description=details["description"]
-        base_address=ConfigAddress(details["base_address"],16)
-        badchars=details["bad characters"]
+        offset=int(details[SECTION_OFFSET],0)
+        rop_address=ConfigAddress(details[SECTION_ROP_ADDRESS],16)
+        description=details[SECTION_DESCRIPTION]
+        base_address=ConfigAddress(details[SECTION_BASE_ADDRESS],16)
+        badchars=details[SECTION_BADCHARS]
         
         section=RopGadget(endianness,
                          offset,
@@ -96,23 +117,25 @@ class OverflowConfigParser(object):
         pass
     
     def _encoded_payload_section(details):
-        if details["type"] != "EncodedPayloadSection":
+        if details[SECTION_TYPE] != "EncodedPayloadSection":
             raise OverflowConfigException("Wrong type specified: %s. Expecting %s. " % 
-                                                (details["type"],"EncodedPayloadSection"))
-        offset=int(details["offset"],0)
-        description=details["description"]
+                                                (details[SECTION_TYPE],"EncodedPayloadSection"))
+        offset=int(details[SECTION_OFFSET],0)
+        description=details[SECTION_DESCRIPTION]
         
-        encoder_class=details["encoder_class"]
-        payload_sections=details["payloads"]
+        encoder_class=details[SECTION_ENCODER_CLASS]
+        payload_sections=details[SECTION_PAYLOADS]
         payloads_to_encode=[]
         for k,v in payload_sections.items():
             payload_details=v
             payload_class=class_by_name(payload_details["payload_class"])
             p=payload_class.reconstitute(payload_details)
+            if payload_details["payload_class"] == "Trampoline":
+                Logging().LOG_DEBUG("Trampoline:\n%s" % p.pretty_string())
             payloads_to_encode.append(p)
         
-        details["payloads"]=payloads_to_encode
-        encoded_payload_class=class_by_name(details["encoder_class"])
+        details[SECTION_PAYLOADS]=payloads_to_encode
+        encoded_payload_class=class_by_name(details[SECTION_ENCODER_CLASS])
         encoded_payload=encoded_payload_class.reconstitute(details)
         
         section=EncodedPayloadSection(offset,encoded_payload,description=description)
@@ -130,16 +153,16 @@ class OverflowConfigParser(object):
         #loop over all_sections and pull out encoder
         #sections into a separate dict.
         for section,details in all_sections.items():
-            if details.has_key("encoder_class"):
+            if details.has_key(SECTION_ENCODER_CLASS):
                 logger.LOG_DEBUG("Found encoder section: %s" % section)
                 encoded_payloads[section]=details
         
         #for each encoder, get its list of payloads,
         for section,details in encoded_payloads.items():
             logger.LOG_DEBUG("Parsing payloads for encoder section: %s" % section)
-            payload_string=details["payloads"]
+            payload_string=details[SECTION_PAYLOADS]
             payload_sections=payload_string.split(',')
-            payloads={}
+            payloads=OrderedDict()
             
             #remove each payload from all_sections, store
             #it in a dict
@@ -151,7 +174,7 @@ class OverflowConfigParser(object):
             #replace the encoder's
             #"payloads" comma-separated list with this
             #dictionary of payload sections.
-            details["payloads"]=payloads
+            details[SECTION_PAYLOADS]=payloads
     
     def _build_sections(self,config_sections):
         logger=self.logger
@@ -159,7 +182,7 @@ class OverflowConfigParser(object):
         cls=self.__class__
         for section,details in config_sections.items():
             try:
-                section_type=details["type"]
+                section_type=details[SECTION_TYPE]
                 try:
                     handler=cls.KnownOverflowSections[section_type]
                     logger.LOG_DEBUG("handler found for type: %s. %s" % (section_type,str(handler)))
@@ -171,7 +194,7 @@ class OverflowConfigParser(object):
                     logger.LOG_WARN("No handler for type: %s" % section_type)
                     
             except KeyError as e:
-                if str(e)=='type':
+                if str(e)==SECTION_TYPE:
                 #no "type" for Overflow Description section
                     pass
                     
@@ -181,8 +204,8 @@ class OverflowConfigParser(object):
         self.arch=self.config.get(MAIN_SECTION,"arch")
         self.os=self.config.get(MAIN_SECTION,"os")
         self.endianness=ConfigEndianness.from_name(self.config.get(MAIN_SECTION,"endianness"))
-        self.badchars=ConfigBadchars(self.config.get(MAIN_SECTION,"bad characters"))
-        self.length=int(self.config.get(MAIN_SECTION,"buffer length"),0)
+        self.badchars=ConfigBadchars(self.config.get(MAIN_SECTION,SECTION_BADCHARS))
+        self.length=int(self.config.get(MAIN_SECTION,SECTION_BUFFER_LEN),0)
     
     
     def __init__(self,configfile):
@@ -196,8 +219,8 @@ class OverflowConfigParser(object):
             details=dict(self.config.items(section))
             if not details.has_key("endianness"):
                 details["endianness"]=self.endianness.value
-            if not details.has_key("bad characters"):
-                details["bad characters"]=self.badchars
+            if not details.has_key(SECTION_BADCHARS):
+                details[SECTION_BADCHARS]=self.badchars
             all_sections[section]=details
         
         self._group_encoded_payloads(all_sections)
@@ -222,7 +245,7 @@ class OverflowConfigGenerator(object):
         conf.set(MAIN_SECTION,"arch",arch)
         conf.set(MAIN_SECTION,"os",os)
         conf.set(MAIN_SECTION,"endianness",endianness_name)
-        conf.set(MAIN_SECTION,"buffer length","%d" % len(overflow_buffer))
+        conf.set(MAIN_SECTION,SECTION_BUFFER_LEN,"%d" % len(overflow_buffer))
     
     def _handle_payload(self,details):
         conf=self.config
@@ -239,14 +262,14 @@ class OverflowConfigGenerator(object):
         conf.add_section(section_name)
         payload_string=""
         for k,v in encoded.details.items():
-            if k == "payloads":
+            if k == SECTION_PAYLOADS:
                 for details in v:
                     self.section_count+=1
                     pl_section_name=self._handle_payload(details)
                     payload_string=payload_string+"%s," % pl_section_name
                 if len(payload_string) > 0:
                     payload_string=payload_string.strip(',')
-                    conf.set(section_name,"payloads",payload_string)
+                    conf.set(section_name,SECTION_PAYLOADS,payload_string)
             else:
                 conf.set(section_name,k,v)
 
@@ -299,11 +322,11 @@ class OverflowConfigGenerator(object):
             
             conf.add_section(section_name)
             if section.__class__.__name__ == "RopGadget":
-                if section.details["type"] != "RopGadget":
-                    self.logger.LOG_WARN("WTF: %s" % section.details["type"])
+                if section.details[SECTION_TYPE] != "RopGadget":
+                    self.logger.LOG_WARN("WTF: %s" % section.details[SECTION_TYPE])
                     raise Exception()
             
-            if section.details["type"] == "OverflowSection":
+            if section.details[SECTION_TYPE] == "OverflowSection":
                 self.logger.LOG_WARN("WTF.")
                 self.logger.LOG_DEBUG("%s" % section.__class__.__name__)
                 raise Exception()
@@ -322,4 +345,4 @@ class OverflowConfigGenerator(object):
         self.badchars=self._merge_badchars(overflow_buffer.badchars)
         self._init_main_section(overflow_buffer)
         self._init_overflow_sections(overflow_buffer)
-        self.config.set("Overflow Description","bad characters",self.badchar_string)
+        self.config.set(MAIN_SECTION,SECTION_BADCHARS,self.badchar_string)
