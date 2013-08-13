@@ -8,7 +8,7 @@ import struct
 import string
 from collections import OrderedDict
 from ...common.support import BigEndian,LittleEndian
-
+from ...common.support import pretty_string
 
 class Trampoline(object):
     """
@@ -67,10 +67,13 @@ class Trampoline(object):
         self.details=details=OrderedDict()
         details["jump_offset"]=offset
 
+    def pretty_string(self):
+        return pretty_string(self.shellcode)
+        
     @classmethod
     def reconstitute(cls,details):
         offset=int(details["jump_offset"],0)
         endianness=details["endianness"]
         
-        return cls(offset,endianness)
+        return cls(endianness,offset)
 
