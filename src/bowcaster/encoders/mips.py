@@ -204,7 +204,7 @@ class MipsXorEncoder(XorEncoder):
         self.logger.LOG_DEBUG("No bad bytes in decoder stub.")
         
         tried_keys=[]
-        if not self.key:
+        if self.key == None:
             self.packed_key=None
             attempts=self.__class__.MAX_ATTEMPTS
         else:
