@@ -226,7 +226,7 @@ class TrojanServer(ConnectbackServer):
     An ideal use case is to have the TrojanDropper download and execute a
     second stage payload, that in turn downloads another file (i.e. wget or nc)
     then pops a connect-back shell.
-
+        
     See stage2dropper.c in contrib for an example.
     """
     def __init__(self,connectback_ip,files_to_serve,port=8080,startcmd=None,connectback_shell=False,
