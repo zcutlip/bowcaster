@@ -7,9 +7,57 @@ import errno
 from connectback_server import ConnectbackServer
 
 class MultiplexingServer(ConnectbackServer):
+    """
+    A forking connect-back server that accepts and proxies multiple connections.
+    
+    Connect-back payloads from multiple exploited targets can connect back to
+    this server and it will forward those connections on to the connect-back
+    endpoints provided to the constructor.
+    
+    An example use case is single exploit that will cause multiple devices
+    to connect back to the same host and port.  This server will accept all of
+    those simultaneous connections and proxy them to the appropriate connect-back
+    servers.
+    
+    """
     
     def __init__(self,connectback_ip,outbound_addresses,port=8080,outbound_ports=[],logger=None,connected_event=None):
+        """
+        Class constructor.
+
+        Parameters
+        ----------
+        connectback_ip:     the address this server should bind to.
+        outbound_addresses: A list of addresses that this server should connect
+            to in turn.  If the same address is listed multiple times.  It will
+            be connected to multiple times.  When a connection has been forwared
+            to each address in the list, the server terminates.
+        port: Optional. The port this server should bind to.  Default value is
+            8080.
+        outbound_ports:     Optional. a list of outbound ports corresponding to
+            the addresses listed in oubound_addresses.  If no list is provided,
+            the outbound ports will start with the listening port+1, and
+            and increment by one for each additional connection.  If a list is
+            provided but contains fewer ports than outbound addresses, the
+            the remaining outbound ports will begin incrementing by one from the
+            last port listed and used.
+        logger: Optional.  A logger object is
+
+        Examples
+        --------
+        Listen on the default port of 8080, accept two connections on 192.168.0.1,
+        and forward them to localhost ports 8081 and 8082 before terminating.
+        server=MultiplexingServer("192.168.0.1",["127.0.0.1","127.0.0.1"])
         
+        Same as above, but forward to ports 9000 and 9001:
+        server=MultiplexingServer("192.168.0.1",["127.0.0.1","127.0.0.1"],
+                            outbound_ports=[9000,9001])
+        
+        Same as above, but forward to ports 8082 and 8082+1:
+        server=MultiplexingServer("192.168.0.1",["127.0.0.1","127.0.0.1"],
+                            outbound_ports=[8082])
+        
+        """
         super(self.__class__,self).__init__(connectback_ip,port=port,connectback_shell=False,logger=logger,
                                         connected_event=connected_event)
 
@@ -156,7 +204,15 @@ class MultiplexingServer(ConnectbackServer):
     
     
     def serve(self):
-        
+        """
+        Start the multiplexing server.
+
+        This function forks and returns the child PID.  The child exits without
+        returning.
+
+        If server fails to bind an error is logged, and any exception is passed
+        up to the caller.
+        """
         if self.pid:
             raise ServerException("There is an existing child process. Pid: %d" % self.pid)
         
