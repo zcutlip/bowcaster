@@ -1,6 +1,5 @@
 # Copyright (c) 2013
 # - Zachary Cutlip <uid000@gmail.com>
-#p.add_string('K'*4)
 # - Tactical Network Solutions, LLC
 #
 # See LICENSE.txt for more details.
