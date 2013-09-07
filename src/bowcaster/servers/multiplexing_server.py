@@ -18,10 +18,10 @@ class MultiplexingServer(ConnectbackServer):
     A forking connect-back server that accepts and proxies multiple connections.
     
     Connect-back payloads from multiple exploited targets can connect back to
-    this server and it will forward those connections on to the connect-back
+    this server, and it will forward those connections on to the connect-back
     endpoints provided to the constructor.
     
-    An example use case is single exploit that will cause multiple devices
+    An example use case is a single exploit that will cause multiple devices
     to connect back to the same host and port.  This server will accept all of
     those simultaneous connections and proxy them to the appropriate connect-back
     servers.
@@ -34,21 +34,22 @@ class MultiplexingServer(ConnectbackServer):
 
         Parameters
         ----------
-        connectback_ip:     the address this server should bind to.
+        connectback_ip: The address this server should bind to.
         outbound_addresses: A list of addresses that this server should connect
-            to in turn.  If the same address is listed multiple times.  It will
-            be connected to multiple times.  When a connection has been forwared
+            to in turn.  If the same address is listed multiple times, it will
+            be connected to multiple times.  When a connection has been forwarded
             to each address in the list, the server terminates.
         port: Optional. The port this server should bind to.  Default value is
             8080.
-        outbound_ports:     Optional. a list of outbound ports corresponding to
+        outbound_ports: Optional. a list of outbound ports corresponding to
             the addresses listed in oubound_addresses.  If no list is provided,
             the outbound ports will start with the listening port+1, and
             and increment by one for each additional connection.  If a list is
             provided but contains fewer ports than outbound addresses, the
             the remaining outbound ports will begin incrementing by one from the
             last port listed and used.
-        logger: Optional.  A logger object is
+        logger: Optional logger object. If none is provided, a logger will be
+            instantiated with output to stdout.
 
         Examples
         --------

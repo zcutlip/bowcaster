@@ -39,7 +39,8 @@ class ConnectbackServer(object):
             service, or to customize the interactive shell, e.g., '/bin/sh -i'.
         connectback_shell: Optional.  This argument defaults to True, which is
             99% of the time is what you need.  See note.
-        logger: Optional.  A logger object is
+        logger: Optional logger object. If none is provided, a logger will be
+            instantiated with output to stdout.
 
         Note
         ----
@@ -246,7 +247,8 @@ class TrojanServer(ConnectbackServer):
             service, or to customize the interactive shell, e.g., '/bin/sh -i'.
         connectback_shell: Optional.  This argument defaults to True, which is
             99% of the time is what you need.  See note.
-        logger: Optional.  A logger object is
+        logger: Optional logger object. If none is provided, a logger will be
+            instantiated with output to stdout.
 
         """
         super(self.__class__,self).__init__(connectback_ip,port=port,startcmd=startcmd,
