@@ -21,8 +21,37 @@ from ..common.support import Logging
 
 class HTTPConnectbackServer(object):
     """
+    An HTTP Connect-back server class.
+    
+    This class provides a server that waits for an incoming HTTP GET from an
+    exploited target in order to serve up a requested payload to the target.
+    The server will serve up each file in the provided list of files one time,
+    then terminate.
+    
+    This class is useful for targets that have been exploited via command
+    injection.  For example, a wget command maybe executed on the target to
+    retrieve a payload, and a subsequent command injection is used to execute
+    the payload.  In the case that multiple targets will be exploited, each
+    requiring a customized payload, this HTTP server keeps track of which
+    payloads have been served so that it may terminate once all have been
+    served.
     """
     def __init__(self,connectback_ip,files_to_serve,port=8080,logger=None):
+        """
+        Class constructor.
+        
+        Parameters
+        ----------
+        connectback_ip: The address this server should bind to.
+        files_to_serve: A list of files to serve up to the target.  Each file
+            is served exactly once.  To serve a file more than once, include it
+            in the list more than once.  Once all files have been served, 
+            the server terminates.
+        port: Optional. The port this server should bind to. Default value is
+              8080.
+        logger: Optional.  Logger object to send log output to. If none is
+            provided, a logger will be instantiated with output to stdout.
+        """
         if not logger:
             logger=Logging()
         self.logger=logger
@@ -75,6 +104,10 @@ class HTTPConnectbackServer(object):
 
     
     def wait(self):
+        """
+        Wait for the server to shut down.  The server will terminate when it has
+        served each file in the list provided to the constructor exactly once.
+        """
         if not self.pid:
             return None
         self._setup_signals()
@@ -90,6 +123,15 @@ class HTTPConnectbackServer(object):
         return status[1]
     
     def shutdown(self):
+        """
+        Shut down the server.
+        
+        This should only be necessary if the server has not finished serving
+        the list of files (e.g., the remote exploit has failed).
+        
+        In the event the server has served all the files in the list provided to
+        the constructor, it will terminate on its own.
+        """
         if not self.pid:
             return
         self.logger.LOG_INFO("[%d] Shutting down server. PID: %d" % (os.getpid(),self.pid))
@@ -104,6 +146,14 @@ class HTTPConnectbackServer(object):
                 raise
         
     def serve(self):
+        """
+        Serve a list of one or more files.
+        
+        This function returns the child PID. The child exits without
+        returning.
+        
+        Parameters: None.
+        """
         try:
             self.httpd=_LimitedHTTPServer(self.server_address,
                                          _LimitedHTTPRequestHandler,
