@@ -36,7 +36,7 @@ class HTTPConnectbackServer(object):
     payloads have been served so that it may terminate once all have been
     served.
     """
-    def __init__(self,connectback_ip,files_to_serve,port=8080,logger=None):
+    def __init__(self,connectback_ip,files_to_serve,port=8080,docroot=None,logger=None):
         """
         Class constructor.
         
@@ -57,6 +57,13 @@ class HTTPConnectbackServer(object):
         self.logger=logger
         self.server_address=(connectback_ip,port)
         self.files_to_serve=files_to_serve
+        if not docroot:
+            self.docroot=os.getcwd()
+        else:
+            self.docroot=docroot
+            
+        self.docroot=self.docroot+"/"
+        
         problems=self._sanity_check_files(files_to_serve)
         if len(problems) > 0:
             msg="There were problems with the following files:"
@@ -67,9 +74,10 @@ class HTTPConnectbackServer(object):
         
     def _sanity_check_files(self,files):
         problems={}
+        root=self.docroot
         for file in files:
             try:
-                open(file,"r")
+                open(root+file,"r")
             except Exception as e:
                 problems[file]=e
 
@@ -157,7 +165,8 @@ class HTTPConnectbackServer(object):
         try:
             self.httpd=_LimitedHTTPServer(self.server_address,
                                          _LimitedHTTPRequestHandler,
-                                         files_to_serve=self.files_to_serve)
+                                         files_to_serve=self.files_to_serve,
+                                         docroot=self.docroot)
         except Exception as e:
             self.logger.LOG_WARN("There was an error creating the HTTP server: %s" % str(e))
             raise
