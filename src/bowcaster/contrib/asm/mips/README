@@ -1,0 +1,6 @@
+I originally created the MIPS payload Python modules prior to the existence of
+Bowcaster.  Since I had already generated the Python code, I didn't do a great
+job in all cases of keeping up with the original assembly files.  I've gathered
+them together as well as I could.  These should more or less represent the MIPS
+payloads that are in Bowcaster, but they aren't guaranteed to assemble to the
+exact same binary code that is found in the payload modules.
