@@ -7,5 +7,5 @@
 
 from http import *
 
-__all__ = ["HttpClient"]
+__all__ = ["HttpClient","HTTPError"]
 

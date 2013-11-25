@@ -8,6 +8,7 @@
 import urllib
 import urllib2
 
+from urllib2 import HTTPError
 class HttpClient(object):
     """
     A very basic HTTP client class whose primary purpose is sending a string
@@ -39,9 +40,9 @@ class HttpClient(object):
         get_resp:   Optional. A response is expected, and will be read() and
                     returned.  Defaults to true.
         """
+
         if post_data and urlencode:
             post_data=self.encode(post_data)
-            
         if post_data and headers:
             req = urllib2.Request(url,post_data,headers)
         elif post_data:
