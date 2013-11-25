@@ -7,7 +7,7 @@
 import struct
 import string
 from ...common.support import BigEndian,LittleEndian
-
+from ...common import hackers_quotes
 
 class Trampoline(object):
     """
@@ -46,6 +46,9 @@ class Trampoline(object):
             
         Note: 1028, or 0x0404, is the smallest amount you can trampoline forward
              without a NULL byte in the encoded beq instruction.
+        Note: Remember, the program counter has already advanced +4 from whatever
+              the location is of this payload object. So your jump offset will be
+              relative to this object's offset+4.
         """
         if (offset < self.__class__.MAX_BACK_JUMP or
                 offset > self.__class__.MAX_FWD_JUMP):
@@ -62,6 +65,8 @@ class Trampoline(object):
 
         self.shellcode=self.shellcode.replace("HIHI",high_byte)
         self.shellcode=self.shellcode.replace("LOLO",low_byte)
-
+        
+        if hackers_quotes:
+            hackers_quotes.log_random_quote()
 
 

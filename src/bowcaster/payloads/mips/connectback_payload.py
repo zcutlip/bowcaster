@@ -10,6 +10,7 @@ import socket
 import signal
 import os
 from ...common.support import BigEndian,LittleEndian
+from ...common import hackers_quotes
 
 class ConnectbackPayload:
     """
@@ -162,5 +163,7 @@ class ConnectbackPayload:
         shellcode = shellcode.replace("PORT2",chr(port & 0xFF))
 
         self.shellcode=shellcode
+        if hackers_quotes:
+            hackers_quotes.log_random_quote()
 
 
