@@ -13,6 +13,7 @@ import traceback
 import errno
 from ..servers import ServerException
 from ..common.support import Logging
+from ..common import hackers_quotes
 
 class ConnectbackServer(object):
     """
@@ -190,7 +191,10 @@ class ConnectbackServer(object):
         If server fails to bind an error is logged, and any exception is passed
         up to the caller.
         """
-
+        
+        if hackers_quotes:
+            hackers_quotes.log_random_quote()
+            
         if self.connectback_shell or self.startcmd:
             if self.pid:
                 raise ServerException("There is an existing child process. Pid: %d" %self.pid)
@@ -289,6 +293,10 @@ class TrojanServer(ConnectbackServer):
         This function forks and returns the child PID.  The child exits without
         returning.
         """
+        
+        if hackers_quotes:
+            hackers_quotes.log_random_quote()
+        
         try:
             serversocket=self._server()
         except Exception as e:

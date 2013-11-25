@@ -9,7 +9,7 @@ import socket
 import os
 import signal
 from ...common.support import BigEndian,LittleEndian
-
+from ...common import hackers_quotes
 
 class TrojanDropper:
     """
@@ -175,7 +175,9 @@ class TrojanDropper:
         shellcode=shellcode.replace("PORT1",chr(port >> 8))
         shellcode=shellcode.replace("PORT2",chr(port & 0xFF))
         self.shellcode=shellcode
-
+        
+        if hackers_quotes:
+            hackers_quotes.log_random_quote()
 
 
 
