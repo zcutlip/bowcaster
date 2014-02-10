@@ -41,8 +41,8 @@ class OverflowBuffer(object):
 
         Raises OverflowBuilderException
         """
-        self.arch="MIPS"
-        self.os="Linux"
+        self.arch=None
+        self.os=None
         self.badchars=badchars
         self.overflow_string=None
         self.endianness=endianness
@@ -670,6 +670,18 @@ class SectionCreator(object):
         return section
         
     def encoded_payload_section(self,offset,payload,description=None):
+        os=payload.os
+        arch=payload.arch
+        
+        if not self.os:
+            self.os=os
+        else if(self.os != os):
+            raise OverflowBuilderException("Adding an encoded payload for os: %s when os is already: %s" % (os,self.os))
+        
+        if not self.arch:
+            self.arch=arch
+        elif(self.arch != arch):
+            raise OverflowBuilderException("Adding an encoded payload for arch: %s when arch is already: %s" % (arch,self.arch))
         section=EncodedPayloadSection(offset,payload,
                                      description=description,
                                      logger=self.logger)
