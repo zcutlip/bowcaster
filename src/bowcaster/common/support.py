@@ -57,12 +57,24 @@ class Logging:
     prefixes.append(" [@] ")
 
     def __init__(self,logfile=None,max_level=INFO):
+        """
+        Class constructor.
+
+        Parameters
+        ----------
+        logfile: Optional file name to send log output to.
+        max_level: Optional maximum level of logging. Log messages
+                   above this level will be suppressed.
+        """
         self.max_level=int(max_level)
         self.logfile=sys.stdout
         if logfile:
             self.logfile=open(logfile,"a")
 
     def set_max_log_level(self,max_level):
+        """
+        Change the maximum log level of a Logging object at run time.
+        """
         self.max_level=max_level
 
     def log_msg_start(self,msg,level=INFO):
