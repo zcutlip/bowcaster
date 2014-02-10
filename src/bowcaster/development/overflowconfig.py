@@ -2,14 +2,13 @@ import sys
 import types
 import ConfigParser
 import traceback
+import importlib
 from collections import OrderedDict
 #from ..common.support import class_by_name
 from bowcaster.common.support import Logging
 from bowcaster.common.support import LittleEndian,BigEndian
 from bowcaster.development.overflowbuilder import OverflowBuffer,RopGadget,PayloadSection,EncodedPayloadSection
-from bowcaster.payloads.mips import ConnectbackPayload
-from bowcaster.payloads.mips import Trampoline
-from bowcaster.payloads.mips import TrojanDropper
+
 from bowcaster.encoders import *
 
 """
@@ -29,20 +28,17 @@ SECTION_ENCODER_CLASS="encoder_class"
 SECTION_ENCODER_KEY="key"
 SECTION_PAYLOADS="payloads"
 
-def class_by_name(name):
-    """
-    got this from stackoverflow :-/
-    http://stackoverflow.com/questions/1176136/convert-string-to-python-class-object
-    """
-    try:
-        identifier=getattr(sys.modules[__name__],name)
-    except AttributeError:
-        raise NameError("%s doesn't exist." % name)
-    if not isinstance(identifier,(types.ClassType,types.TypeType)):
-        raise TypeError("%s is not a class." % name)
-    return identifier
-    
+def class_by_name(import_string,classname):
+    module=importlib.import_module(import_string)
+    return getattr(module,classname)
 
+def payload_class_by_name(arch,os,classname):
+    import_string="bowcaster.payloads.%s.%s" % (arch.lower(),os.lower())
+    return class_by_name(import_string,classname)
+
+def encoder_class_by_name(arch,os,classname):
+    import_string="bowcaster.encoders.%s.%s" % (arch.lower(),os.lower())
+    return class_by_name(import_string,classname)
 
 class OverflowConfigException(Exception):
     def __init__(self,message,details=None):
@@ -94,7 +90,7 @@ class ConfigEndianness(object):
 
 
 class OverflowConfigParser(object):
-    def _gadget_section(details):
+    def _gadget_section(self,details):
         if details[SECTION_TYPE] != "RopGadget":
             raise OverflowConfigException("Wrong type specified: %s. Expecting %s." % (details[SECTION_TYPE],"RopGadget"))
         endianness=details["endianness"]
@@ -113,10 +109,10 @@ class OverflowConfigParser(object):
                          badchars=badchars)
         return section
         
-    def _payload_section(details):
+    def _payload_section(self,details):
         pass
     
-    def _encoded_payload_section(details):
+    def _encoded_payload_section(self,details):
         if details[SECTION_TYPE] != "EncodedPayloadSection":
             raise OverflowConfigException("Wrong type specified: %s. Expecting %s. " % 
                                                 (details[SECTION_TYPE],"EncodedPayloadSection"))
@@ -128,23 +124,20 @@ class OverflowConfigParser(object):
         payloads_to_encode=[]
         for k,v in payload_sections.items():
             payload_details=v
-            payload_class=class_by_name(payload_details["payload_class"])
+            payload_class=payload_class_by_name(self.arch,self.os,payload_details["payload_class"])
             p=payload_class.reconstitute(payload_details)
             if payload_details["payload_class"] == "Trampoline":
                 Logging().LOG_DEBUG("Trampoline:\n%s" % p.pretty_string())
             payloads_to_encode.append(p)
         
         details[SECTION_PAYLOADS]=payloads_to_encode
-        encoded_payload_class=class_by_name(details[SECTION_ENCODER_CLASS])
+        encoded_payload_class=encoder_class_by_name(details[SECTION_ENCODER_CLASS])
         encoded_payload=encoded_payload_class.reconstitute(details)
         
         section=EncodedPayloadSection(offset,encoded_payload,description=description)
         
         return section
         
-    KnownOverflowSections={"RopGadget":_gadget_section,
-                        "PayloadSection":_payload_section,
-                        "EncodedPayloadSection":_encoded_payload_section}
 
     def _group_encoded_payloads(self,all_sections):
         logger=self.logger
@@ -184,7 +177,7 @@ class OverflowConfigParser(object):
             try:
                 section_type=details[SECTION_TYPE]
                 try:
-                    handler=cls.KnownOverflowSections[section_type]
+                    handler=self.known_sections[section_type]
                     logger.LOG_DEBUG("handler found for type: %s. %s" % (section_type,str(handler)))
                     section_list.append(handler(details))
                 except KeyError as e:
@@ -209,6 +202,9 @@ class OverflowConfigParser(object):
     
     
     def __init__(self,configfile):
+        self.known_sections={"RopGadget":self._gadget_section,
+                            "PayloadSection":self._payload_section,
+                            "EncodedPayloadSection":self._encoded_payload_section}
         self.logger=Logging()
         self.config=ConfigParser.RawConfigParser()
         self.config.read(configfile)
