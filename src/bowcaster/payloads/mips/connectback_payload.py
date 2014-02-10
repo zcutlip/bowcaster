@@ -166,6 +166,7 @@ class ConnectbackPayload:
         self.shellcode=shellcode
         if hackers_quotes:
             hackers_quotes.log_random_quote()
+
         
         self.details=details=OrderedDict()
         self.description="TCP connect-back shell. Target address & port=%s:%s" % (connectback_ip,str(port))

@@ -246,6 +246,7 @@ class MipsXorEncoder(XorEncoder):
         self.arch=self.__class__.ARCH
         details["arch"]=self.arch
         details["os"]=self.os
+
         
         
     def pretty_string(self):
