@@ -23,13 +23,15 @@ class OverflowBuffer(object):
     addresses and a payload string.
     """
 
-    def __init__(self,endianness,length,overflow_sections=None,logger=None,badchars=[]):
+    def __init__(self,endianness,length,os=None,arch=None,overflow_sections=None,logger=None,badchars=[]):
         """
         Class constructor.
 
         Parameters
         ----------
         length: Length of overflow buffer to build.
+        os:     optional argument to set the os string.
+        arch:   optional argument to set the arch string.
         overflow_sections: List of OverflowSection objects to substitute
             into the base overflow string.
         logger: Optional logger object. If none is provided, a logger will be
@@ -41,8 +43,8 @@ class OverflowBuffer(object):
 
         Raises OverflowBuilderException
         """
-        self.arch=None
-        self.os=None
+        self.arch=arch
+        self.os=os
         self.badchars=badchars
         self.overflow_string=None
         self.endianness=endianness
@@ -590,6 +592,8 @@ class SectionCreator(object):
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
         """
+        self.arch=None
+        self.os=None
         self.__section_list=[]
         self.endianness=endianness
         self.badchars=parse_badchars(badchars)
@@ -675,13 +679,15 @@ class SectionCreator(object):
         
         if not self.os:
             self.os=os
-        else if(self.os != os):
+        elif(self.os != os):
             raise OverflowBuilderException("Adding an encoded payload for os: %s when os is already: %s" % (os,self.os))
         
         if not self.arch:
             self.arch=arch
         elif(self.arch != arch):
             raise OverflowBuilderException("Adding an encoded payload for arch: %s when arch is already: %s" % (arch,self.arch))
+
+        
         section=EncodedPayloadSection(offset,payload,
                                      description=description,
                                      logger=self.logger)
