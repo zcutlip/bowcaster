@@ -29,7 +29,6 @@ SECTION_ENCODER_KEY="key"
 SECTION_PAYLOADS="payloads"
 
 def class_by_name(import_string,classname):
-    print("Import string:\n\t%s" % import_string)
     module=importlib.import_module(import_string)
     return getattr(module,classname)
 
