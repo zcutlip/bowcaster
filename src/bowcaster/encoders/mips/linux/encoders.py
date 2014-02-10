@@ -8,12 +8,12 @@ import string
 import random
 import struct
 from collections import OrderedDict
-from ..encoders import EncoderException
-from xorencoder import XorEncoder
-from ..common.support import BigEndian,LittleEndian
-from ..common.support import Logging
-from ..common.support import pretty_string
-from ..common.support import parse_badchars
+from ....encoders import EncoderException
+from ...xorencoder import XorEncoder
+from ....common.support import BigEndian,LittleEndian
+from ....common.support import Logging
+from ....common.support import pretty_string
+from ....common.support import parse_badchars
 
 class MipsXorEncoder(XorEncoder):
     """
