@@ -20,6 +20,8 @@ class MipsXorEncoder(XorEncoder):
     An XOR encoder for the MIPS CPU archictecture.  Supports big endian and small endian.
     """
     MAX_ATTEMPTS=10
+    OS="linux"
+    ARCH="mips"
     decoders={}
     decoders[LittleEndian] = string.join([
         "SIZ2SIZ1\x0e\x24",    # li t6,-5
@@ -160,7 +162,6 @@ class MipsXorEncoder(XorEncoder):
         endianness attribute, which is one of LittleEndian or BigEndian
         (imported from bowcaster.common.support)
         """
-
         if not type(payload)==list:
             payload=[payload]
         self.payloads=payload
@@ -241,6 +242,10 @@ class MipsXorEncoder(XorEncoder):
         self.details=details=OrderedDict()
         details["description"]=self.description
         details["key"]="%#010x" % self.key
+        self.os=self.__class__.OS
+        self.arch=self.__class__.ARCH
+        details["arch"]=self.arch
+        details["os"]=self.os
         
         
     def pretty_string(self):
@@ -256,7 +261,7 @@ class MipsXorEncoder(XorEncoder):
     @classmethod
     def reconstitute(cls,details):
         payloads=details["payloads"]
-        badchars=details["bad characters"]
+        badchars=details["bad_characters"]
         key=int(details["key"],0)
         print key
         print "%#010x" % key
