@@ -390,7 +390,7 @@ class PatternSection(OverflowSection):
 
         maxlen=len(upper_alpha)*len(lower_alpha)*len(numerals)
         if maxlen < requested_length:
-            raise OverflowBuilderException("Maximum pattern length, %d is less than requested length %d.")
+            raise OverflowBuilderException("Maximum pattern length, %d is less than requested length %d." % (maxlen,requested_length))
             
         
         pattern=""
@@ -524,6 +524,12 @@ class SectionCreator(object):
     
     section_list=property(**section_list())
     
+    def remove_section(self,offset):
+        removed=False
+        for section in self.section_list:
+            if section.offset==offset:
+                self.section_list.remove(section)
+    
     def string_section(self,offset,section_string,description=None):
         """
         Create a string section from the provided string
@@ -540,7 +546,7 @@ class SectionCreator(object):
         self.section_list.append(section)
         return section
 
-    def gadget_section(self,offset,rop_address,description=None,base_address=None):
+    def gadget_section(self,offset,rop_address,description=None,base_address=None,endianness=None):
         """
         Create a ROP gadget.
 
@@ -556,10 +562,15 @@ class SectionCreator(object):
             to compute the ROP gadget's actual address in memory.  If not
             specified, then the default_base, if any, provided to the
             constructor is used instead.
+        endianness: Optional. Override the section creator's endianness with the provided
+            value.
         """
         if None==base_address:
             base_address=self.base_address
-        section=RopGadget(self.endianness,offset,rop_address,
+        
+        if None==endianness:
+            endianness=self.endianness
+        section=RopGadget(endianness,offset,rop_address,
                         description=description,
                         base_address=base_address,
                         badchars=self.badchars,
