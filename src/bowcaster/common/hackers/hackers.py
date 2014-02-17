@@ -18,7 +18,7 @@ class Hackers():
         cls=self.__class__
         thispath=self.__get_this_path()
         if not logger:
-            logger=Logging()
+            logger=Logging(max_level=Logging.DEBUG)
         self.logger=logger
         self.hackers_quotes=[]
         
