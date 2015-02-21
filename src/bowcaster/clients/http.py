@@ -66,7 +66,7 @@ class HttpClient(object):
         #Instead of using urlib2.urlopen(),
         #Create a HTTPHandler object and optionally set its debug level to 1
         httpHandler = urllib2.HTTPHandler()
-        if print_req:
+        if debug_req:
             httpHandler.set_http_debuglevel(1)
         
         #Instead of using urllib2.urlopen, create an opener,
