@@ -46,7 +46,7 @@ def send_fw(url,fw_file):
     headers["Content-Type"]=mf.get_content_type()
     client=HttpClient()
     logger.LOG_INFO("Sending request.")
-    resp=client.send(url,headers=headers,post_data=post_data,logger=logger)
+    resp=client.send(url,headers=headers,post_data=post_data)
     
     return resp
     
