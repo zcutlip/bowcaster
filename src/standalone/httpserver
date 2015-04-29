@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import sys
+import traceback
+
+from bowcaster.common.support import Logging
+from bowcaster.servers.http_server import HTTPConnectbackServer
+
+if __name__ == "__main__":
+    logger=Logging()
+    
+    files_to_serve=sys.argv[1].split(",")
+    docroot=sys.argv[2]
+    try:
+        port=int(sys.argv[3])
+    except:
+        port=8080
+    
+    
+    
+    try:
+        httpd=HTTPConnectbackServer("",files_to_serve,port=port,docroot=docroot,logger=logger)
+        logger.LOG_INFO("Starting server")
+        pid=httpd.serve()
+        logger.LOG_INFO("Waiting for server to terminate. PID: %d" % pid)
+    except:
+        logger.LOG_WARN("Error starting server.")
+        sys.exit(1)
+        
+    try:
+        httpd.wait()
+    except Exception as e:
+        logger.LOG_DEBUG("except clause.")
+
+    httpd.shutdown()
+
+    logger.LOG_INFO("Server has terminated.")
