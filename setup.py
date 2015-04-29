@@ -27,6 +27,7 @@ setup(name='Bowcaster',
             'bowcaster.servers',
             'bowcaster.clients'],
         scripts=["src/standalone/connectbackserver",
+                 "src/standalone/httpserver",
                  "src/standalone/trojanserver"]
         )
 
