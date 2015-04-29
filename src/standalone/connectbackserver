@@ -2,11 +2,11 @@
 import sys
 from bowcaster.servers import ConnectbackServer
 
-def main(ip_address,port=None):
+def main(ip_address,port=None,startcmd=None):
     if port:
-        server=ConnectbackServer(ip_address,port=port)
+        server=ConnectbackServer(ip_address,port=port,startcmd=startcmd)
     else:
-        server=ConnectbackServer(ip_address)
+        server=ConnectbackServer(ip_address,startcmd=startcmd)
 
     server.serve()
     server.wait()
@@ -14,11 +14,14 @@ def main(ip_address,port=None):
 if __name__ == "__main__":
     ip_address="0.0.0.0"
     port=None
-
+    startcmd=None
     if len(sys.argv) > 1:
         ip_address=sys.argv[1]
 
     if len(sys.argv) > 2:
         port=sys.argv[2]
-
-    main(ip_address,port=port)
+        
+    if len(sys.argv) > 3:
+        startcmd=sys.argv[3]
+    
+    main(ip_address,port=port,startcmd=startcmd)
