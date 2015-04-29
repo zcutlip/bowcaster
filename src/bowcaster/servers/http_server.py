@@ -124,7 +124,7 @@ class HTTPConnectbackServer(object):
         while keepgoing:
             try:
                 status=os.waitpid(self.pid,0)
-            except Excpetion as e:
+            except Exception as e:
                 keepgoing=False
         self.pid=None
         
