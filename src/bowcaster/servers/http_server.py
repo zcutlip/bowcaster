@@ -13,6 +13,8 @@ import urlparse
 import time
 import traceback
 import errno
+from Queue import Queue,Empty
+from threading import Thread
 from BaseHTTPServer import HTTPServer,BaseHTTPRequestHandler
 
 from ..servers import ServerException
@@ -63,7 +65,6 @@ class HTTPConnectbackServer(object):
             self.docroot=docroot
             
         self.docroot=self.docroot+"/"
-        
         problems=self._sanity_check_files(files_to_serve)
         if len(problems) > 0:
             msg="There were problems with the following files:"
@@ -71,7 +72,18 @@ class HTTPConnectbackServer(object):
                 msg +="\n\t%s: %s" % (file,str(e))
             raise ServerException(msg)
         
-        
+    def _pipe_reader(self):
+        line=self.readpipe.readline().rstrip()
+        while line:
+            self.logger.LOG_DEBUG("%s"  % line)
+            ipaddr,resp,request=line.split(":",2)
+            if request in self.clients:
+                self.clients[request].append((ipaddr,resp))
+            else:
+                self.clients[request]=[(ipaddr,resp)]
+            self.logger.LOG_DEBUG("Pipe reader got client %s requesting: %s" % (ipaddr,request))
+            line=self.readpipe.readline().rstrip()
+    
     def _sanity_check_files(self,files):
         problems={}
         root=self.docroot
@@ -92,9 +104,12 @@ class HTTPConnectbackServer(object):
             sys.exit()
     
     def _handler(self,signum,frame):
+        self.logger.LOG_DEBUG("[%d] Got signal %d" % (os.getpid(),signum    ))
         if self.keepgoing:
+            self.logger.LOG_DEBUG("[%d] Setting keepgoing=false." % os.getpid())
             self.keepgoing=False
-            raise ServerException()
+        self.logger.LOG_DEBUG("[%d] Raising exception." % os.getpid())
+        raise ServerException()
 
     def _setup_signals(self):
         self.keepgoing=True
@@ -105,10 +120,22 @@ class HTTPConnectbackServer(object):
         while self.keepgoing and self.httpd.more_files():
             try:
                 self.httpd.handle_request()
-            except:
+            except Exception as e:
                 self.logger.LOG_INFO("[%d] http server caught an exception." % os.getpid())
                 #traceback.print_exc()
                 self.keepgoing=False
+                raise e
+
+            self.logger.LOG_DEBUG("[%d] Writing to writepipe." % os.getpid())
+
+            try:
+                client_tuple=self.httpd.clients.get(False)
+                #192.168.1.1:200:index.html
+                client_tuple_string="%s:%d:%s" % client_tuple
+                self.logger.LOG_DEBUG("%s" % client_tuple_string)
+                os.write(self.writepipe.fileno(),"%s\n" % client_tuple_string )
+            except Empty:
+                pass
 
     
     def wait(self):
@@ -121,12 +148,19 @@ class HTTPConnectbackServer(object):
         self._setup_signals()
         keepgoing=True
         status=(0,0)
+        
         while keepgoing:
             try:
+                self.logger.LOG_DEBUG("[%d] Attempting to wait() on pid: %d" % (os.getpid(),self.pid))
                 status=os.waitpid(self.pid,0)
+            except OSError, e:
+                keepgoing = False
+                if not e.errno==errno.ECHILD:
+                    raise e
             except Exception as e:
+                #traceback.print_exc()
                 keepgoing=False
-        self.pid=None
+                raise e
         
         return status[1]
     
@@ -140,8 +174,12 @@ class HTTPConnectbackServer(object):
         In the event the server has served all the files in the list provided to
         the constructor, it will terminate on its own.
         """
+        self.logger.LOG_DEBUG("shutdown()"+str(self.pid))
         if not self.pid:
-            return
+            self.logger.LOG_DEBUG("[%d] This is the child. In shutdown() so exiting." % os.getpid())
+            self.writepipe.flush()
+            self.writepipe.close()
+            exit(1)
         self.logger.LOG_INFO("[%d] Shutting down server. PID: %d" % (os.getpid(),self.pid))
         #traceback.print_stack()
         try:
@@ -170,14 +208,32 @@ class HTTPConnectbackServer(object):
         except Exception as e:
             self.logger.LOG_WARN("There was an error creating the HTTP server: %s" % str(e))
             raise
+        readpipe,writepipe=os.pipe()
+        readpipe=os.fdopen(readpipe,'r',0)
+        writepipe=os.fdopen(writepipe,'w',0)
+        
         self.pid=os.fork()
         if self.pid:
+            self.readpipe=readpipe
+            writepipe.close()
+            self.clients={}
+            self.logger.LOG_DEBUG("Creating pipe reader thread.")
+            self.pipe_reader_thread=Thread(target=self._pipe_reader)
+            self.logger.LOG_DEBUG("Starting pipe reader thread.")
+            self.pipe_reader_thread.start()
             self.httpd.socket.close()
             self.httpd=None
             return self.pid
-        else:
-            self._setup_signals()
+
+        self.writepipe=writepipe
+        readpipe.close()
+        self._setup_signals()
+        try:
             self._serve_files()
+        except Exception as e:
+            traceback.print_exc()
+            self.logger.LOG_WARN("[%d] Caught exception while serving files. Exiting." % os.getpid())
+            
         
         self.logger.LOG_INFO("[%d] Shutting down." % os.getpid())
         
@@ -203,7 +259,7 @@ class _LimitedHTTPServer(HTTPServer):
                 filename=self._sanitize_filename(filename)
             filename=self.docroot+filename
             self.files_to_serve.append(filename)
-
+        self.clients=Queue()
         HTTPServer.__init__(self,server_address,handler_class)
     
     def _sanitize_filename(self,filename):
@@ -228,29 +284,45 @@ class _LimitedHTTPServer(HTTPServer):
             self.files_to_serve.remove(filename)
 
 class _LimitedHTTPRequestHandler(BaseHTTPRequestHandler):
-
+    TEXT_TYPES=[".txt",".htm",".html"]
+    
     def log_message(self, fmt, *args):
         self.server.logger.LOG_DEBUG(fmt % (args))
+        
+    def _get_content_type(self,filename):
+        content_type='application/octet-stream'
+        for type in self.TEXT_TYPES:
+            if filename.endswith(type):
+                content_type = "text/html"
+        return content_type
 
     def do_GET(self):
         if self.server.logger:
             logger=self.server.logger
         else:
             logger=Logging()
+        logger.LOG_INFO("Serving %s to %s\n" % (self.path, self.client_address[0]))
+
         filename=self.server.docroot+self.path
+        if not self.path == "/":
+            path=self.path.lstrip("/")
+        else:
+            path=self.path
 
 
         file_exists=False
         if self.server.has_file(filename):
             file_exists=True
             self.server.remove_file(filename)
+            content_type=self._get_content_type(filename)
             try:
                 f=open(filename)
                 self.send_response(200)
-                self.send_header('Content-type','application/octet-stream')
+                self.send_header('Content-type',content_type)
                 self.end_headers()
                 self.wfile.write(f.read())
                 f.close()
+                self.server.clients.put((self.client_address[0],200,path))
             except Exception as e:
                 logger.LOG_WARN("Error serving file: %s" % self.path)
                 logger.LOG_WARN("%s" % str(e))
@@ -260,6 +332,7 @@ class _LimitedHTTPRequestHandler(BaseHTTPRequestHandler):
 
 
         if not file_exists:
+            self.server.clients.put((self.client_address[0],404,path))
             self.send_error(404,'File Not found: %s' % self.path)
 
 
