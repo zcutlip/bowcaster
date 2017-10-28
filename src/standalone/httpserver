@@ -7,7 +7,7 @@ from bowcaster.common.support import Logging
 from bowcaster.servers.http_server import HTTPConnectbackServer
 
 if __name__ == "__main__":
-    logger=Logging()
+    logger=Logging(max_level=Logging.DEBUG)
     
     files_to_serve=sys.argv[1].split(",")
     docroot=sys.argv[2]
@@ -30,6 +30,7 @@ if __name__ == "__main__":
     try:
         httpd.wait()
     except Exception as e:
+        traceback.print_exc()
         logger.LOG_DEBUG("except clause.")
 
     httpd.shutdown()

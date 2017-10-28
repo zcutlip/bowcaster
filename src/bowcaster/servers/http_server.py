@@ -38,7 +38,7 @@ class HTTPConnectbackServer(object):
     payloads have been served so that it may terminate once all have been
     served.
     """
-    def __init__(self,connectback_ip,files_to_serve,port=8080,docroot=None,logger=None):
+    def __init__(self,connectback_ip,files_to_serve,port=8080,docroot=None,logger=None,debug=False):
         """
         Class constructor.
         
@@ -56,7 +56,11 @@ class HTTPConnectbackServer(object):
         """
         if not logger:
             logger=Logging()
+            if debug:
+                #TODO: wrap exception traceback printing in "if debug"
+                logger.set_max_log_level(Logging.DEBUG)
         self.logger=logger
+        
         self.server_address=(connectback_ip,port)
         self.files_to_serve=files_to_serve
         if not docroot:
