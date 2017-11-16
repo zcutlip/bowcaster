@@ -1,11 +1,32 @@
 # Copyright (c) 2013
 # - Zachary Cutlip <uid000@gmail.com>
 # - Tactical Network Solutions, LLC
-# 
+#
 # See LICENSE.txt for more details.
-# 
+#
 import sys
 import binascii
+BigEndian,LittleEndian=range(2)
+"""
+Endianness constants to pass to constructors ofendianness-sensitive classes.
+"""
+
+class PointerSizes(object):
+    LP64=8
+    LP32=4
+
+class StructPackFmt(str):
+    FormatStrs={}
+    FormatStrs[BigEndian]={PointerSizes.LP32:">L",
+                           PointerSizes.LP64:">Q"}
+    FormatStrs[LittleEndian]={PointerSizes.LP32:"<L",
+                           PointerSizes.LP64:"<Q"}
+    def __new__(cls, endianness,pointer_size):
+        #super(self.__class__,self).__init__()
+        fmt_strs=cls.FormatStrs
+        obj=str.__new__(cls,fmt_strs[endianness][pointer_size])
+        return obj
+
 
 def hex_string(string):
     h_string=""
@@ -23,10 +44,7 @@ def pretty_string(string):
             p_string+="\\x"+binascii.hexlify(byte)
     return p_string
 
-BigEndian,LittleEndian=range(2)
-"""
-Endianness constants to pass to constructors ofendianness-sensitive classes.
-"""
+
 def parse_badchars(badchars):
     badchar_list=[]
     for item in badchars:
@@ -143,4 +161,3 @@ class Logging:
         if not self.logfile == sys.stdout:
             self.logfile.close()
             self.logfile=sys.stdout
-
