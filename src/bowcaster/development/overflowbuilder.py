@@ -1,15 +1,22 @@
 # Copyright (c) 2013
 # - Zachary Cutlip <uid000@gmail.com>
 # - Tactical Network Solutions, LLC
-# 
+#
 # See LICENSE.txt for more details.
-# 
+#
 import struct
 
 from ..common.support import Logging
 from ..common.support import BigEndian,LittleEndian
 from ..common.support import pretty_string
 from ..common.support import parse_badchars
+from ..common.support import PointerSizes
+from ..common.support import StructPackFmt
+
+LP32=PointerSizes.LP32
+LP64=PointerSizes.LP64
+
+
 
 class OverflowBuilderException(Exception):
     pass
@@ -23,13 +30,16 @@ class OverflowBuffer(object):
     addresses and a payload string.
     """
 
-    def __init__(self,endianness,length,overflow_sections=None,logger=None):
+    def __init__(self,endianness,length,pointer_size=LP32,overflow_sections=None,logger=None):
         """
         Class constructor.
 
         Parameters
         ----------
+        endianness: Big or little endian encoding
         length: Length of overflow buffer to build.
+        pointer_size: Width of a pointer in bytes. Recognized pointer widths are
+            4 and 8. Default is 4.
         overflow_sections: List of OverflowSection objects to substitute
             into the base overflow string.
         logger: Optional logger object. If none is provided, a logger will be
@@ -44,6 +54,8 @@ class OverflowBuffer(object):
 
         self.overflow_string=None
         self.endianness=endianness
+        self.pointer_size=pointer_size
+        self.format_str=StructPackFmt(endianness,pointer_size)
         self.logger=logger
         if not self.logger:
             self.logger=Logging()
@@ -151,10 +163,7 @@ class OverflowBuffer(object):
         """
         string=value
         if isinstance(value,int):
-            if self.endianness==BigEndian:
-                format_str=">L"
-            elif self.endianness == LittleEndian:
-                format_str="<L"
+            format_str=self.format_str
             string=struct.pack(format_str,value)
 
         return self.overflow_string.find(string)
@@ -167,7 +176,7 @@ class OverflowBuffer(object):
             self.logger.LOG_INFO(section.description)
         self.logger.LOG_INFO("")
         self.logger.LOG_INFO("************************************")
-    
+
     def __len__(self):
         return self.len()
 
@@ -391,8 +400,8 @@ class PatternSection(OverflowSection):
         maxlen=len(upper_alpha)*len(lower_alpha)*len(numerals)
         if maxlen < requested_length:
             raise OverflowBuilderException("Maximum pattern length, %d is less than requested length %d." % (maxlen,requested_length))
-            
-        
+
+
         pattern=""
         try:
             for upperchar in upper_alpha:
@@ -450,7 +459,7 @@ class RopGadget(OverflowSection):
     This is only compatible with 32-bit addresses.
     """
 
-    def __init__(self,endian,offset,rop_address,description=None,base_address=0,badchars=[],logger=None):
+    def __init__(self,endian,offset,rop_address,pointer_size=LP32,description=None,base_address=0,badchars=[],logger=None):
         """Class constructor.
 
         Parameters
@@ -472,13 +481,13 @@ class RopGadget(OverflowSection):
             instantiated with output to stdout.
         """
 
-        format_str=""
-        if endian==BigEndian:
-            format_str=">L"
-        elif endian == LittleEndian:
-            format_str="<L"
-        else:
-            raise OverflowBuilderException("Unknown endianness specified in RopGadget")
+        format_str=StructPackFmt(endian,pointer_size)
+        # if endian==BigEndian:
+        #     format_str=">L"
+        # elif endian == LittleEndian:
+        #     format_str="<L"
+        # else:
+        #     raise OverflowBuilderException("Unknown endianness specified in RopGadget")
 
         if not description:
             description = ("ROP gadget: offset %d, address %#010x" % (offset,rop_address+base_address))
@@ -495,7 +504,7 @@ class SectionCreator(object):
     instantiation of the factory, rather than during each section's
     instantiation.
     """
-    def __init__(self,endianness,base_address=0,badchars=[],logger=None):
+    def __init__(self,endianness,pointer_size=LP32,base_address=0,badchars=[],logger=None):
         """
         Parameters
         ----------
@@ -513,23 +522,24 @@ class SectionCreator(object):
         self.endianness=endianness
         self.badchars=parse_badchars(badchars)
         self.base_address=base_address
+        self.pointer_size=pointer_size
         if not logger:
             logger=Logging()
         self.logger=logger
-    
+
     def section_list():
         def fget(self):
             return self.__section_list
         return locals()
-    
+
     section_list=property(**section_list())
-    
+
     def remove_section(self,offset):
         removed=False
         for section in self.section_list:
             if section.offset==offset:
                 self.section_list.remove(section)
-    
+
     def string_section(self,offset,section_string,description=None):
         """
         Create a string section from the provided string
@@ -567,18 +577,19 @@ class SectionCreator(object):
         """
         if None==base_address:
             base_address=self.base_address
-        
+
         if None==endianness:
             endianness=self.endianness
         section=RopGadget(endianness,offset,rop_address,
+                        pointer_size=self.pointer_size,
                         description=description,
                         base_address=base_address,
                         badchars=self.badchars,
                         logger=self.logger)
-        
+
         self.section_list.append(section)
         return section
-        
+
 if __name__=="__main__":
     overflow_sections=[]
     # overflow_sections.append(OverflowSection(396,"AAAAAAAA","my string of As"))
@@ -593,4 +604,3 @@ if __name__=="__main__":
         print e
         exit(1)
     print str(ofb)
-
