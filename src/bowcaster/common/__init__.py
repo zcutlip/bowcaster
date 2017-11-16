@@ -1,14 +1,14 @@
 # Copyright (c) 2013
 # - Zachary Cutlip <uid000@gmail.com>
 # - Tactical Network Solutions, LLC
-# 
+#
 # See LICENSE.txt for more details.
-# 
+#
 
 from support import *
 from hackers.hackers import *
 
-__all__ = ["BigEndian","LittleEndian","Logging"]
+__all__ = ["BigEndian","LittleEndian","Logging","PointerSizes","StructPackFmt"]
 
 hackers_quotes=None
 try:
