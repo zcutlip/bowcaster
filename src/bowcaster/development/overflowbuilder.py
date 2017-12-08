@@ -30,7 +30,7 @@ class OverflowBuffer(object):
     addresses and a payload string.
     """
 
-    def __init__(self,endianness,length,pointer_size=LP32,overflow_sections=None,logger=None):
+    def __init__(self,endianness,length=0,pointer_size=LP32,overflow_sections=None,logger=None):
         """
         Class constructor.
 
@@ -57,6 +57,9 @@ class OverflowBuffer(object):
         self.pointer_size=pointer_size
         self.format_str=StructPackFmt(endianness,pointer_size)
         self.logger=logger
+        if overflow_sections and not length:
+            length=overflow_sections.min_overflow_length()
+
         if not self.logger:
             self.logger=Logging()
         if None == overflow_sections:
@@ -371,6 +374,19 @@ class OverflowSection(object):
             return True
 
         return False
+    def __eq__(self,other):
+        return self.offset==other.offset
+    def __ne__(self,other):
+        return self.offset!=other.offset
+    def __lt__(self,other):
+        return self.offset<other.offset
+    def __le__(self,other):
+        return self.offset<=other.offset
+    def __gt__(self,other):
+        return self.offset < other.offset
+    def __ge__(self,other):
+        return self.offset >= other.offset
+
 
 class PatternSection(OverflowSection):
     #TODO Create patterns that are free of specified bad characters
@@ -495,7 +511,7 @@ class RopGadget(OverflowSection):
 
         super(self.__class__,self).__init__(offset,rop_bytes,description=description,badchars=badchars)
 
-class SectionCreator(object):
+class SectionCreator(list):
     """
     A factory for overflow section objects.
 
@@ -518,7 +534,7 @@ class SectionCreator(object):
         logger: Optional logger object. If none is provided, a logger will be
             instantiated with output to stdout.
         """
-        self.__section_list=[]
+        super(self.__class__,self).__init__()
         self.endianness=endianness
         self.badchars=parse_badchars(badchars)
         self.base_address=base_address
@@ -526,13 +542,32 @@ class SectionCreator(object):
         if not logger:
             logger=Logging()
         self.logger=logger
+    @property
+    def section_list(self):
+        return self
 
-    def section_list():
-        def fget(self):
-            return self.__section_list
-        return locals()
+    #section_list=property(self.section_list())
 
-    section_list=property(**section_list())
+    def section_list_sorted(self):
+        return sorted(self.section_list)
+
+    def first_section(self):
+        sorted_sections=self.section_list_sorted()
+        if len(sorted_sections):
+            return sorted_sections[0]
+        else:
+            return None
+    def last_section(self):
+        sorted_sections=self.section_list_sorted()
+        if len(sorted_sections):
+            return sorted_sections[-1]
+        else:
+            return None
+
+    def min_overflow_length(self):
+        last_section=self.last_section()
+        min_length=last_section.offset+len(last_section.section_string)
+        return min_length
 
     def remove_section(self,offset):
         removed=False
